@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Cadence">
 <meta name="theme-color" content="#0C2233">
 <title>Cadence</title>
@@ -13,27 +13,28 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,700;125,800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  :root{ --accent:#0B7285; --accent-soft:#E6F3F5; --ink:#1A2421; --fog:#F2F4F3; --line:#DDE3E1; --muted:#6E7A76; --flag:#C92A2A; --navy:#0C2233; }
+  :root{ --accent:#0B7285; --accent-soft:#E6F3F5; --ink:#1A2421; --fog:#F2F4F3; --line:#DDE3E1; --muted:#6E7A76; --flag:#C92A2A; --navy:#0C2233; --kb:0px; }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{background:var(--fog);color:var(--ink);font:400 15px/1.55 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
   button{cursor:pointer;font-family:inherit}
   input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .hidden{display:none !important}
 
-  header{background:var(--navy);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-top)) 16px}
+  header{background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px 16px}
   .hrow{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto}
   .brand{display:flex;align-items:center;gap:9px}
   .brand svg{width:26px;height:26px;flex:none}
   .brand h1{font:800 21px/1 'Archivo',sans-serif;font-stretch:125%;text-transform:uppercase;letter-spacing:.02em}
   .toggle{display:flex;gap:6px}
-  .toggle button{border:1.5px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.7);padding:6px 13px;font:600 12px 'IBM Plex Mono',monospace;border-radius:2px}
+  .toggle button{border:1.5px solid rgba(255,255,255,.28);background:transparent;color:rgba(255,255,255,.72);padding:7px 15px;font:600 12.5px 'IBM Plex Mono',monospace;border-radius:3px}
   .toggle button.on{border-color:var(--accent);background:var(--accent);color:#fff}
 
-  nav.tabs{background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:2px;padding:0 8px}
-  nav.tabs button{border:none;background:none;color:var(--muted);padding:11px 14px;font:600 12.5px 'IBM Plex Mono',monospace;border-bottom:2.5px solid transparent;text-transform:uppercase;letter-spacing:.04em}
+  nav.tabs{background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:2px}
+  nav.tabs button{border:none;background:none;color:var(--muted);padding:12px 15px;font:600 12.5px 'IBM Plex Mono',monospace;border-bottom:2.5px solid transparent;text-transform:uppercase;letter-spacing:.04em}
   nav.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
 
-  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + var(--kb))}
   .wrap{max-width:760px;margin:0 auto;width:100%;padding:14px 16px}
   .view{display:none}
   .view.on{display:block}
@@ -41,45 +42,28 @@
   .brief{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.6}
   .brief.loading{color:var(--muted);font:500 12px 'IBM Plex Mono',monospace}
   .brief .lbl{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px}
-
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;margin-bottom:6px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px}
   .stat{background:#fff;border:1px solid var(--line);padding:9px 11px;min-width:0}
   .stat .v{font:600 16px 'IBM Plex Mono',monospace;white-space:nowrap}
   .stat .v small{font-size:11px;color:var(--muted)}
   .stat .l{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
-  .fresh{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);padding:4px 2px 10px}
+  .fresh{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);padding:8px 2px 0}
   .err{background:#FDECEC;border:1px solid var(--flag);padding:11px;font-size:13px;margin-bottom:10px;color:#7a1a1a}
-  .hidden{display:none !important}
 
-  #chat .msg{max-width:88%;padding:10px 13px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;margin-bottom:9px;border:1px solid var(--line);background:#fff;border-radius:3px}
-  #chat .msg.user{margin-left:auto;background:var(--accent);color:#fff;border:none}
-  .starters{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
-  .starters button{border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px;border-radius:3px}
-  .thinking{font:500 12px 'IBM Plex Mono',monospace;color:var(--muted);padding:2px}
-  .histbtn{font:600 11px 'IBM Plex Mono',monospace;color:var(--accent);background:none;border:1px solid var(--line);padding:6px 10px;margin-bottom:10px;border-radius:3px}
-
-  .inputbar{background:#fff;border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
-  .irow{display:flex;gap:7px;max-width:760px;margin:0 auto;align-items:center}
-  .irow input{flex:1;border:1.5px solid var(--line);padding:11px 13px;font-size:16px;background:#F9FAFA;border-radius:3px}
-  .iconbtn{background:#fff;border:1.5px solid var(--line);width:42px;height:42px;flex:none;border-radius:3px;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
-  .iconbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
-  .iconbtn.rec{border-color:var(--flag);color:var(--flag);background:#FDECEC;animation:pulse 1s infinite}
-  @keyframes pulse{50%{opacity:.55}}
-  .irow .send{background:var(--accent);color:#fff;border:none;padding:0 16px;height:42px;font:600 13px 'IBM Plex Mono',monospace;border-radius:3px}
-  .irow .send:disabled{background:#B9C2BF}
-
-  .plan{background:#fff;border:1px solid var(--line);padding:16px 18px;font-size:14.5px;line-height:1.6}
-  .plan h2{font:700 15px 'Inter';margin:14px 0 6px;color:var(--navy)}
-  .plan h3{font:700 13.5px 'Inter';margin:11px 0 4px;color:var(--accent);text-transform:uppercase;letter-spacing:.03em;font-size:12px}
-  .plan ul{margin:4px 0 8px 18px}.plan li{margin:2px 0}
-  .plan p{margin:6px 0}
-  .plan strong{font-weight:600}
-  .planhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
-  .planhead .t{font:800 17px 'Archivo';font-stretch:125%;text-transform:uppercase}
-  .planhead .meta{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted)}
-  .btn{background:var(--accent);color:#fff;border:none;padding:9px 14px;font:600 12.5px 'IBM Plex Mono',monospace;border-radius:3px}
+  .planblock{margin-bottom:16px}
+  .planhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:10px}
+  .planhead .t{font:800 16px 'Archivo';font-stretch:125%;text-transform:uppercase}
+  .planhead .meta{font:500 10px 'IBM Plex Mono',monospace;color:var(--muted)}
+  .btn{background:var(--accent);color:#fff;border:none;padding:8px 13px;font:600 12px 'IBM Plex Mono',monospace;border-radius:3px}
   .btn.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
-  .empty{color:var(--muted);font-size:14px;padding:22px 4px;text-align:center;line-height:1.6}
+  .btn:disabled{opacity:.5}
+  .plan{background:#fff;border:1px solid var(--line);padding:15px 17px;font-size:14.5px;line-height:1.6}
+  .plan h2{font:700 14.5px 'Inter';margin:13px 0 5px;color:var(--navy)}
+  .plan h2:first-child{margin-top:0}
+  .plan h3{font:700 12px 'Inter';margin:10px 0 3px;color:var(--accent);text-transform:uppercase;letter-spacing:.03em}
+  .plan ul{margin:3px 0 7px 18px}.plan li{margin:2px 0}
+  .plan p{margin:5px 0}.plan strong{font-weight:600}
+  .empty{color:var(--muted);font-size:14px;padding:16px 4px;line-height:1.6}
 
   .card{background:#fff;border:1px solid var(--line);padding:15px 16px;margin-bottom:12px}
   .card h2{font:800 15px 'Archivo';font-stretch:125%;text-transform:uppercase;margin-bottom:12px}
@@ -93,7 +77,39 @@
   table.hist th{text-align:left;font:600 10px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--line)}
   table.hist td{padding:6px 6px;border-bottom:1px solid var(--fog);font-family:'IBM Plex Mono',monospace}
 
-  #pinScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;z-index:20}
+  /* input bar (always visible, moves above keyboard) */
+  .inputbar{position:fixed;left:0;right:0;bottom:var(--kb);background:#fff;border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom));z-index:30}
+  .irow{display:flex;gap:7px;max-width:760px;margin:0 auto;align-items:center}
+  .irow input{flex:1;border:1.5px solid var(--line);padding:11px 13px;font-size:16px;background:#F9FAFA;border-radius:3px}
+  .iconbtn{background:#fff;border:1.5px solid var(--line);width:42px;height:42px;flex:none;border-radius:3px;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+  .iconbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .iconbtn.rec{border-color:var(--flag);color:var(--flag);background:#FDECEC;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .irow .send{background:var(--accent);color:#fff;border:none;padding:0 16px;height:42px;font:600 13px 'IBM Plex Mono',monospace;border-radius:3px}
+  .irow .send:disabled{background:#B9C2BF}
+
+  /* chat drawer (over the tabs, above the input bar) */
+  #drawer{position:fixed;inset:0;background:var(--fog);z-index:20;display:none;flex-direction:column}
+  #drawer.on{display:flex}
+  .dhead{background:var(--navy);color:#fff;display:flex;align-items:center;gap:8px;padding:12px 12px}
+  .dhead .dtitle{flex:1;font:600 14px 'Inter';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dhead button{background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:3px;padding:7px 10px;font:600 11.5px 'IBM Plex Mono',monospace}
+  .dthread{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(72px + var(--kb));max-width:760px;margin:0 auto;width:100%}
+  .msg{max-width:88%;padding:10px 13px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;margin-bottom:9px;border:1px solid var(--line);background:#fff;border-radius:3px}
+  .msg.user{margin-left:auto;background:var(--accent);color:#fff;border:none}
+  .starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .starters button{border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px;border-radius:3px}
+  .thinking{font:500 12px 'IBM Plex Mono',monospace;color:var(--muted);padding:2px}
+  .hint{color:var(--muted);font-size:14px;padding-top:6px}
+
+  /* conversations list */
+  #convoList{position:fixed;inset:0;background:var(--fog);z-index:25;display:none;flex-direction:column}
+  #convoList.on{display:flex}
+  #convoList .clist{flex:1;overflow-y:auto;max-width:760px;margin:0 auto;width:100%;padding:8px 0}
+  .crow{display:block;width:100%;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;font-size:14.5px}
+  .crow .cwhen{display:block;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:3px}
+
+  #pinScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;z-index:40}
   #pinScreen .card{border-top:4px solid var(--accent);max-width:330px;width:100%;text-align:center;color:var(--ink)}
   #pinScreen .brand{justify-content:center;margin-bottom:6px}
   #pinScreen input{width:100%;border:1.5px solid var(--line);padding:12px;font:600 22px 'IBM Plex Mono',monospace;text-align:center;letter-spacing:.3em;margin:14px 0}
@@ -129,406 +145,401 @@
 </header>
 
 <nav class="tabs">
-  <button id="tab-coach" class="on" onclick="setTab('coach')">Coach</button>
+  <button id="tab-today" class="on" onclick="setTab('today')">Today</button>
   <button id="tab-meal" onclick="setTab('meal')">Meal</button>
   <button id="tab-fitness" onclick="setTab('fitness')">Fitness</button>
   <button id="tab-body" onclick="setTab('body')">Body</button>
 </nav>
 
 <div class="scroll" id="scroll">
-  <!-- COACH -->
-  <div id="view-coach" class="view on">
-    <div class="wrap">
-      <div id="dataErr" class="err hidden"></div>
-      <div id="briefing" class="brief hidden"></div>
-      <div id="stats" class="stats"></div>
-      <div id="fresh" class="fresh"></div>
-      <button id="histBtn" class="histbtn hidden" onclick="loadHistory()">Load earlier conversation</button>
-      <div id="chat"></div>
+  <div id="view-today" class="view on"><div class="wrap">
+    <div id="dataErr" class="err hidden"></div>
+    <div id="briefing" class="brief hidden"></div>
+    <div id="stats" class="stats"></div>
+    <div id="fresh" class="fresh"></div>
+  </div></div>
+
+  <div id="view-meal" class="view"><div class="wrap">
+    <div class="planblock">
+      <div class="planhead"><span class="t">Weekly Plan</span><button class="btn" onclick="makePlan('meal','plan')">Generate / update</button></div>
+      <div id="meal_plan"></div>
     </div>
-  </div>
-  <!-- MEAL -->
-  <div id="view-meal" class="view">
-    <div class="wrap">
-      <div class="planhead">
-        <div class="t">Meal Plan</div>
-        <button class="btn" id="mealGen" onclick="makePlan('meal')">Update with coach</button>
-      </div>
-      <div id="mealBody"></div>
+    <div class="planblock">
+      <div class="planhead"><span class="t">Food Ideas</span><button class="btn ghost" onclick="makePlan('meal','ideas')">Get ideas</button></div>
+      <div id="meal_ideas"></div>
     </div>
-  </div>
-  <!-- FITNESS -->
-  <div id="view-fitness" class="view">
-    <div class="wrap">
-      <div class="planhead">
-        <div class="t">Fitness Plan</div>
-        <button class="btn" id="fitGen" onclick="makePlan('fitness')">Update with coach</button>
-      </div>
-      <div id="fitBody"></div>
+  </div></div>
+
+  <div id="view-fitness" class="view"><div class="wrap">
+    <div class="planblock">
+      <div class="planhead"><span class="t">Training Cycle</span><button class="btn" onclick="makePlan('fitness','plan')">Generate / update</button></div>
+      <div id="fitness_plan"></div>
     </div>
-  </div>
-  <!-- BODY -->
-  <div id="view-body" class="view">
-    <div class="wrap">
-      <div id="bodyNudge" class="nudge hidden"></div>
-      <div class="card">
-        <h2>Record today</h2>
-        <div class="grid2">
-          <div class="fld"><label>Weight (kg)</label><input id="m_weight" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Body fat (%)</label><input id="m_bf" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Waist (cm)</label><input id="m_waist" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Hips (cm)</label><input id="m_hips" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Chest (cm)</label><input id="m_chest" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Shoulders (cm)</label><input id="m_shoulder" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Arm (cm)</label><input id="m_arm" inputmode="decimal" placeholder="—"></div>
-          <div class="fld"><label>Thigh (cm)</label><input id="m_thigh" inputmode="decimal" placeholder="—"></div>
-        </div>
-        <div class="savebar">
-          <button class="btn" id="recSave" onclick="saveRecord()">Save</button>
-          <span id="recMsg" class="saved"></span>
-        </div>
-      </div>
-      <div class="card">
-        <h2>History</h2>
-        <div id="bodyHist"></div>
-      </div>
+    <div class="planblock">
+      <div class="planhead"><span class="t">Workout Ideas</span><button class="btn ghost" onclick="makePlan('fitness','ideas')">Get ideas</button></div>
+      <div id="fitness_ideas"></div>
     </div>
-  </div>
+  </div></div>
+
+  <div id="view-body" class="view"><div class="wrap">
+    <div id="bodyNudge" class="nudge hidden"></div>
+    <div class="card">
+      <h2>Record today</h2>
+      <div class="grid2">
+        <div class="fld"><label>Weight (kg)</label><input id="m_weight" inputmode="decimal"></div>
+        <div class="fld"><label>Body fat (%)</label><input id="m_bf" inputmode="decimal"></div>
+        <div class="fld"><label>Waist (cm)</label><input id="m_waist" inputmode="decimal"></div>
+        <div class="fld"><label>Hips (cm)</label><input id="m_hips" inputmode="decimal"></div>
+        <div class="fld"><label>Chest (cm)</label><input id="m_chest" inputmode="decimal"></div>
+        <div class="fld"><label>Shoulders (cm)</label><input id="m_shoulder" inputmode="decimal"></div>
+        <div class="fld"><label>Arm (cm)</label><input id="m_arm" inputmode="decimal"></div>
+        <div class="fld"><label>Thigh (cm)</label><input id="m_thigh" inputmode="decimal"></div>
+      </div>
+      <div class="savebar"><button class="btn" id="recSave" onclick="saveRecord()">Save</button><span id="recMsg" class="saved"></span></div>
+    </div>
+    <div class="card"><h2>History</h2><div id="bodyHist"></div></div>
+  </div></div>
 </div>
 
+<!-- chat drawer -->
+<div id="drawer">
+  <div class="dhead">
+    <button onclick="closeDrawer()">✕</button>
+    <span class="dtitle" id="dtitle">New chat</span>
+    <button onclick="openConvoList()">Chats</button>
+    <button onclick="newChat()">＋ New</button>
+  </div>
+  <div class="dthread" id="thread"></div>
+</div>
+
+<!-- conversations list -->
+<div id="convoList">
+  <div class="dhead"><button onclick="closeConvoList()">✕</button><span class="dtitle">Conversations</span><button onclick="newChat()">＋ New</button></div>
+  <div class="clist" id="clist"></div>
+</div>
+
+<!-- shared input bar -->
 <div class="inputbar" id="inputbar">
   <div class="irow">
-    <button id="voiceBtn" class="iconbtn" onclick="toggleVoice()" title="Voice mode (listen + speak)">🎙</button>
-    <input id="msgInput" placeholder="Message the coach…" onkeydown="if(event.key==='Enter')send()">
+    <button id="voiceBtn" class="iconbtn" onclick="toggleVoice()" title="Voice mode">🎙</button>
+    <input id="msgInput" placeholder="Ask the coach…" onfocus="openDrawer()" onkeydown="if(event.key==='Enter')send()">
     <button id="sendBtn" class="send" onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23c";
+const APP_BUILD = "2026-07-23d";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
-  jess: ["How was my week?", "Build my upper-body plan", "What should I eat today?"],
-  billy: ["How's my fueling vs training?", "What's on my plan this week?", "Am I recovering ok?"],
+  jess: ["How was my week?", "Tweak my meal plan", "What should I train today?"],
+  billy: ["How's my fueling vs training?", "Adjust my strength plan", "Am I recovering ok?"],
 };
 
 let person = "jess";
-let tab = "coach";
+let tab = "today";
 let pin = "";
 let busy = false;
-let chats = { jess: [], billy: [] };      // rendered chat cache per person
-let histLoaded = { jess: false, billy: false };
+let drawerShown = false;
 let voiceMode = false, recog = null, listening = false, speaking = false;
+// per-person active conversation + list
+let convo = { jess: {id:null,title:"New chat",msgs:[]}, billy: {id:null,title:"New chat",msgs:[]} };
+let convosLoaded = { jess:false, billy:false };
+let convos = { jess: [], billy: [] };
 
-try { pin = localStorage.getItem("coach_pin") || ""; } catch (e) {}
+try { pin = localStorage.getItem("coach_pin") || ""; } catch(e){}
 if (pin) document.getElementById("pinScreen").classList.add("hidden");
 
 const $ = (id) => document.getElementById(id);
-const fmt = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
-
-function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-// tiny, safe markdown: escape first, then format a limited subset
+const fmt = (v,d=0) => v==null ? "—" : Number(v).toLocaleString(undefined,{maximumFractionDigits:d});
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function md(t){
-  let h = esc(t);
-  const lines = h.split("\n"); let out = ""; let inUl = false;
-  const inline = (s) => s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
-  for (let raw of lines){
-    const l = raw.trim();
-    if (/^##\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out += "<h2>"+inline(l.replace(/^##\s+/,""))+"</h2>"; }
-    else if (/^###\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out += "<h3>"+inline(l.replace(/^###\s+/,""))+"</h3>"; }
-    else if (/^[-*]\s+/.test(l)){ if(!inUl){out+="<ul>";inUl=true;} out += "<li>"+inline(l.replace(/^[-*]\s+/,""))+"</li>"; }
-    else if (l === ""){ if(inUl){out+="</ul>";inUl=false;} }
-    else { if(inUl){out+="</ul>";inUl=false;} out += "<p>"+inline(l)+"</p>"; }
+  let h = esc(t); const lines = h.split("\n"); let out=""; let inUl=false;
+  const il = (s) => s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+  for (let raw of lines){ const l = raw.trim();
+    if (/^##\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out+="<h2>"+il(l.replace(/^##\s+/,""))+"</h2>"; }
+    else if (/^###\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out+="<h3>"+il(l.replace(/^###\s+/,""))+"</h3>"; }
+    else if (/^[-*]\s+/.test(l)){ if(!inUl){out+="<ul>";inUl=true;} out+="<li>"+il(l.replace(/^[-*]\s+/,""))+"</li>"; }
+    else if (l===""){ if(inUl){out+="</ul>";inUl=false;} }
+    else { if(inUl){out+="</ul>";inUl=false;} out+="<p>"+il(l)+"</p>"; }
   }
   if(inUl) out+="</ul>";
   return out;
 }
 
-async function api(action, extra){
-  const r = await fetch(CHAT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-coach-pin": pin },
-    body: JSON.stringify(Object.assign({ person, action }, extra || {})),
-  });
-  if (r.status === 401){
-    try { localStorage.removeItem("coach_pin"); } catch(e){}
-    pin = "";
-    $("pinScreen").classList.remove("hidden");
-    $("pinErr").classList.remove("hidden");
-    throw new Error("pin");
+async function api(action, extra, isRetry){
+  try {
+    const r = await fetch(CHAT_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "x-coach-pin": pin },
+      body: JSON.stringify(Object.assign({ person, action }, extra||{})),
+    });
+    if (r.status === 401){
+      try { localStorage.removeItem("coach_pin"); } catch(e){}
+      pin = ""; $("pinScreen").classList.remove("hidden"); $("pinErr").classList.remove("hidden");
+      throw new Error("pin");
+    }
+    const data = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(data.error || ("HTTP "+r.status));
+    return data;
+  } catch(e){
+    // one retry on transient network failure (iOS "Load failed")
+    if (!isRetry && e.message !== "pin" && (e.name === "TypeError" || /load failed|network|fetch/i.test(e.message))){
+      await new Promise(res=>setTimeout(res,800));
+      return api(action, extra, true);
+    }
+    throw e;
   }
-  const data = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
-  return data;
 }
 
 function submitPin(){
-  const v = $("pinInput").value.trim();
-  if (!v) return;
-  pin = v;
-  try { localStorage.setItem("coach_pin", v); } catch(e){}
-  $("pinScreen").classList.add("hidden");
-  loadTab();
+  const v = $("pinInput").value.trim(); if(!v) return;
+  pin = v; try { localStorage.setItem("coach_pin", v); } catch(e){}
+  $("pinScreen").classList.add("hidden"); loadTab();
 }
 
 function setPerson(p){
   if (p === person) return;
   person = p;
-  const [acc, soft] = ACCENTS[p];
-  document.documentElement.style.setProperty("--accent", acc);
-  document.documentElement.style.setProperty("--accent-soft", soft);
-  $("btn-jess").classList.toggle("on", p === "jess");
-  $("btn-billy").classList.toggle("on", p === "billy");
+  const [acc,soft] = ACCENTS[p];
+  document.documentElement.style.setProperty("--accent",acc);
+  document.documentElement.style.setProperty("--accent-soft",soft);
+  $("btn-jess").classList.toggle("on",p==="jess");
+  $("btn-billy").classList.toggle("on",p==="billy");
+  if (drawerShown){ renderThread(); if(!convosLoaded[person]) loadConvos(); }
   loadTab();
 }
 
 function setTab(t){
   tab = t;
-  for (const k of ["coach","meal","fitness","body"]){
-    $("tab-"+k).classList.toggle("on", k === t);
-    $("view-"+k).classList.toggle("on", k === t);
-  }
-  $("inputbar").style.display = (t === "coach") ? "" : "none";
+  for (const k of ["today","meal","fitness","body"]){ $("tab-"+k).classList.toggle("on",k===t); $("view-"+k).classList.toggle("on",k===t); }
   $("scroll").scrollTop = 0;
   loadTab();
 }
-
 function loadTab(){
   if (!pin) return;
-  if (tab === "coach") loadCoach();
-  else if (tab === "meal") loadPlan("meal");
-  else if (tab === "fitness") loadPlan("fitness");
-  else if (tab === "body") loadBody();
+  if (tab==="today") loadToday();
+  else if (tab==="meal") loadPlans("meal");
+  else if (tab==="fitness") loadPlans("fitness");
+  else if (tab==="body") loadBody();
 }
 
-// ---------- COACH ----------
-async function loadCoach(){
-  const who = person;                       // partition guard: never apply results to a different person
+// ---------- TODAY ----------
+async function loadToday(){
+  const who = person;
   $("dataErr").classList.add("hidden");
-  renderChat();
   loadBriefing();
   try {
     const d = await api("stats", { person: who });
     if (person !== who) return;
-    const a = d.avg7 || {};
-    const cells = [];
-    if (d.weight_kg != null) cells.push(["weight", fmt(d.weight_kg,1), "kg"]);
-    cells.push(["7d kcal in", fmt(a.calories_in), ""]);
-    cells.push(["7d protein", fmt(a.protein_g), "g"]);
-    cells.push(["7d active", fmt(a.active_kcal), "kcal"]);
-    cells.push(["7d steps", fmt(a.steps), ""]);
-    if (a.sleep_hours != null) cells.push(["7d sleep", fmt(a.sleep_hours,1), "h"]);
-    if (a.hrv_ms != null) cells.push(["7d HRV", fmt(a.hrv_ms), "ms"]);
-    $("stats").innerHTML = cells.map(([l,v,u]) => `<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
-    $("fresh").textContent = (d.latest_date ? `latest data: ${d.latest_date}` : "no tracked data yet") + ` · v${APP_BUILD}`;
-  } catch(e){
-    if (e.message === "pin" || person !== who) return;
-    $("dataErr").textContent = "Couldn't load data (" + e.message + "). Chat still works.";
-    $("dataErr").classList.remove("hidden");
-  }
-  if (!histLoaded[who]) loadHistory();
+    const a = d.avg7 || {}; const cells = [];
+    if (d.weight_kg != null) cells.push(["weight",fmt(d.weight_kg,1),"kg"]);
+    cells.push(["7d kcal in",fmt(a.calories_in),""]);
+    cells.push(["7d protein",fmt(a.protein_g),"g"]);
+    cells.push(["7d active",fmt(a.active_kcal),"kcal"]);
+    cells.push(["7d steps",fmt(a.steps),""]);
+    if (a.sleep_hours!=null) cells.push(["7d sleep",fmt(a.sleep_hours,1),"h"]);
+    if (a.hrv_ms!=null) cells.push(["7d HRV",fmt(a.hrv_ms),"ms"]);
+    $("stats").innerHTML = cells.map(([l,v,u])=>`<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
+    $("fresh").textContent = (d.latest_date?`latest data: ${d.latest_date}`:"no tracked data yet") + ` · v${APP_BUILD}`;
+  } catch(e){ if(e.message==="pin"||person!==who) return; $("dataErr").textContent="Couldn't load data ("+e.message+"). Chat still works."; $("dataErr").classList.remove("hidden"); }
 }
-
 async function loadBriefing(){
-  const who = person;
-  const el = $("briefing");
-  el.className = "brief loading"; el.textContent = "reading your week…";
+  const who = person; const el = $("briefing");
+  el.className="brief loading"; el.textContent="reading your week…";
   try {
-    const d = await api("briefing", { person: who });
-    if (person !== who) return;
-    if (d.text){ el.className = "brief"; el.innerHTML = `<span class="lbl">Today's read · ${who==="jess"?"Jess":"Billy"}</span>` + esc(d.text); }
-    else el.className = "brief hidden";
-  } catch(e){ if (person === who) el.className = "brief hidden"; }
-}
-
-async function loadHistory(){
-  const who = person;
-  try {
-    const d = await api("history", { person: who });
-    chats[who] = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
-    histLoaded[who] = true;
-    if (person === who){ $("histBtn").classList.add("hidden"); renderChat(); }
-  } catch(e){}
-}
-
-function renderChat(){
-  const el = $("chat");
-  const msgs = chats[person];
-  if (!msgs.length){
-    el.innerHTML = `<div style="color:var(--muted);font-size:14px;padding-top:6px">Ask about your week, your plans, or what to adjust today.</div>
-      <div class="starters">${STARTERS[person].map(s=>`<button onclick="quickAsk('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join("")}</div>`;
-    return;
-  }
-  el.innerHTML = msgs.map(m => `<div class="msg ${m.role==="user"?"user":""}">${esc(m.content)}</div>`).join("") + (busy ? `<div class="thinking">coach is thinking…</div>` : "");
-  $("scroll").scrollTop = $("scroll").scrollHeight;
-}
-
-function quickAsk(s){ $("msgInput").value = s; send(); }
-
-async function send(){
-  const inp = $("msgInput");
-  const text = inp.value.trim();
-  if (!text || busy) return;
-  const who = person;                     // capture: reply must land on THIS person only
-  chats[who].push({ role: "user", content: text });
-  inp.value = ""; busy = true;
-  $("sendBtn").disabled = true;
-  if (person === who) renderChat();
-  let replyText = null;
-  try {
-    const d = await api("chat", { person: who, message: text });
-    replyText = d.reply;
-    chats[who].push({ role: "assistant", content: d.reply });
-  } catch(e){
-    if (e.message !== "pin") chats[who].push({ role: "assistant", content: "Problem: " + e.message });
-  } finally {
-    busy = false;
-    $("sendBtn").disabled = false;
-    if (person === who) renderChat();
-    if (voiceMode){
-      if (person === who && replyText) speak(replyText, () => { if (voiceMode) startListening(); });
-      else startListening();
-    }
-  }
+    const d = await api("briefing",{ person: who });
+    if (person!==who) return;
+    if (d.text){ el.className="brief"; el.innerHTML=`<span class="lbl">Today's read · ${who==="jess"?"Jess":"Billy"}</span>`+esc(d.text); }
+    else el.className="brief hidden";
+  } catch(e){ if(person===who) el.className="brief hidden"; }
 }
 
 // ---------- PLANS ----------
-async function loadPlan(kind){
+async function loadPlans(kind){
   const who = person;
-  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
-  bodyEl.innerHTML = `<div class="empty">loading…</div>`;
+  $(kind+"_plan").innerHTML = `<div class="empty">loading…</div>`;
+  $(kind+"_ideas").innerHTML = "";
   try {
-    const d = await api("plans", { person: who });
-    if (person !== who) return;
-    const plan = kind === "meal" ? d.meal_plan : d.fitness_plan;
-    renderPlan(kind, plan);
-  } catch(e){ if(person===who && e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
+    const d = await api("plans",{ person: who });
+    if (person!==who) return;
+    renderPlan(kind+"_plan", d[kind+"_plan"], kind==="meal"?"weekly meal plan":"training cycle");
+    renderPlan(kind+"_ideas", d[kind+"_ideas"], kind==="meal"?"food ideas":"workout ideas");
+  } catch(e){ if(person===who && e.message!=="pin") $(kind+"_plan").innerHTML=`<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
 }
-
-function renderPlan(kind, plan){
-  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
-  if (!plan || !plan.content){
-    bodyEl.innerHTML = `<div class="empty">No ${kind} plan yet.<br>Tap <strong>Update with coach</strong> to generate one from your goals and latest data.</div>`;
-    return;
-  }
-  bodyEl.innerHTML = `<div class="planhead"><span class="meta">updated ${esc(plan.updated||"")}</span></div><div class="plan">${md(plan.content)}</div>`;
+function renderPlan(elId, plan, label){
+  const el = $(elId);
+  if (!plan || !plan.content){ el.innerHTML = `<div class="empty">No ${label} yet. Tap the button above, or ask the coach to make one.</div>`; return; }
+  el.innerHTML = `<div class="planhead"><span></span><span class="meta">updated ${esc(plan.updated||"")}</span></div><div class="plan">${md(plan.content)}</div>`;
 }
-
-async function makePlan(kind){
+async function makePlan(kind, mode){
   const who = person;
-  const btn = kind === "meal" ? $("mealGen") : $("fitGen");
-  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
-  btn.disabled = true; const old = btn.textContent; btn.textContent = "thinking…";
-  bodyEl.innerHTML = `<div class="empty">coach is writing your ${kind} plan…</div>`;
+  const elId = kind + (mode==="ideas" ? "_ideas" : "_plan");
+  $(elId).innerHTML = `<div class="empty">coach is writing…</div>`;
   try {
-    const d = await api("make_plan", { person: who, kind });
-    if (person === who) renderPlan(kind, { updated: d.updated, content: d.content });
-  } catch(e){ if(person===who && e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't generate (${esc(e.message)}).</div>`; }
-  finally { btn.disabled = false; btn.textContent = old; }
+    const d = await api("make_plan",{ person: who, kind, mode });
+    if (person!==who) return;
+    renderPlan(elId, { updated:d.updated, content:d.content }, "plan");
+  } catch(e){ if(person===who && e.message!=="pin") $(elId).innerHTML=`<div class="empty">Couldn't generate (${esc(e.message)}).</div>`; }
 }
 
 // ---------- BODY ----------
 async function loadBody(){
   const who = person;
   try {
-    const d = await api("body", { person: who });
-    if (person !== who) return;
-    const rows = d.entries || [];
-    const last = rows[0];
-    const daysSince = last ? Math.round((Date.now() - new Date(last.date+"T00:00:00").getTime())/86400000) : null;
+    const d = await api("body",{ person: who });
+    if (person!==who) return;
+    const rows = d.entries || []; const last = rows[0];
+    const daysSince = last ? Math.round((Date.now()-new Date(last.date+"T00:00:00").getTime())/86400000) : null;
     const nudge = $("bodyNudge");
-    if (!last || daysSince >= 7){
-      nudge.classList.remove("hidden");
-      nudge.textContent = last ? `Last weigh-in was ${daysSince} days ago. Log today so the coach can track your trend.` : "No weight or measurements logged yet. Record your first entry, weekly data is how the coach tunes your plan.";
-    } else nudge.classList.add("hidden");
-    const keys = [["weight_kg","kg"],["waist_cm","waist"],["hips_cm","hips"],["chest_cm","chest"],["arm_cm","arm"],["thigh_cm","thigh"]];
-    $("bodyHist").innerHTML = rows.length ? `<table class="hist"><tr><th>date</th><th>wt</th><th>waist</th><th>hips</th><th>chest</th><th>arm</th><th>thigh</th></tr>` +
-      rows.slice(0,20).map(r=>{ const m=r.measurements||{}; return `<tr><td>${esc(r.date)}</td><td>${r.weight_kg??"—"}</td><td>${m.waist_cm??"—"}</td><td>${m.hips_cm??"—"}</td><td>${m.chest_cm??"—"}</td><td>${m.arm_cm??"—"}</td><td>${m.thigh_cm??"—"}</td></tr>`; }).join("") + `</table>`
-      : `<div class="empty">No entries yet.</div>`;
-  } catch(e){ if(person===who && e.message!=="pin") $("bodyHist").innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
+    if (!last || daysSince>=7){ nudge.classList.remove("hidden"); nudge.textContent = last ? `Last weigh-in was ${daysSince} days ago. Log today so the coach can track your trend.` : "No weight or measurements logged yet. Record your first entry — weekly data is how the coach tunes your plan."; }
+    else nudge.classList.add("hidden");
+    $("bodyHist").innerHTML = rows.length ? `<table class="hist"><tr><th>date</th><th>wt</th><th>waist</th><th>hips</th><th>chest</th><th>arm</th><th>thigh</th></tr>`+
+      rows.slice(0,20).map(r=>{ const m=r.measurements||{}; return `<tr><td>${esc(r.date)}</td><td>${r.weight_kg??"—"}</td><td>${m.waist_cm??"—"}</td><td>${m.hips_cm??"—"}</td><td>${m.chest_cm??"—"}</td><td>${m.arm_cm??"—"}</td><td>${m.thigh_cm??"—"}</td></tr>`; }).join("")+`</table>` : `<div class="empty">No entries yet.</div>`;
+  } catch(e){ if(person===who && e.message!=="pin") $("bodyHist").innerHTML=`<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
 }
-
 async function saveRecord(){
   const who = person;
-  const g = (id) => { const v = $(id).value.trim(); return v === "" ? undefined : Number(v); };
-  const measurements = {};
-  const map = { m_waist:"waist_cm", m_hips:"hips_cm", m_chest:"chest_cm", m_shoulder:"shoulder_cm", m_arm:"arm_cm", m_thigh:"thigh_cm" };
-  for (const [id,k] of Object.entries(map)){ const v = g(id); if (v != null && !isNaN(v)) measurements[k] = v; }
-  const payload = { person: who, weight_kg: g("m_weight"), body_fat_pct: g("m_bf"), measurements };
-  $("recSave").disabled = true; $("recMsg").textContent = "saving…";
+  const g = (id)=>{ const v=$(id).value.trim(); return v===""?undefined:Number(v); };
+  const measurements = {}; const map = { m_waist:"waist_cm",m_hips:"hips_cm",m_chest:"chest_cm",m_shoulder:"shoulder_cm",m_arm:"arm_cm",m_thigh:"thigh_cm" };
+  for (const [id,k] of Object.entries(map)){ const v=g(id); if(v!=null && !isNaN(v)) measurements[k]=v; }
+  const payload = { person: who, weight_kg:g("m_weight"), body_fat_pct:g("m_bf"), measurements };
+  $("recSave").disabled=true; $("recMsg").textContent="saving…";
   try {
-    await api("record", payload);
-    if (person !== who) return;
-    $("recMsg").textContent = "saved ✓";
-    for (const id of ["m_weight","m_bf","m_waist","m_hips","m_chest","m_shoulder","m_arm","m_thigh"]) $(id).value = "";
-    loadBody();
-    setTimeout(()=>{ if($("recMsg")) $("recMsg").textContent=""; }, 2500);
-  } catch(e){ if(person===who && e.message!=="pin") $("recMsg").textContent = "error: " + e.message; }
-  finally { $("recSave").disabled = false; }
+    await api("record",payload);
+    if (person!==who) return;
+    $("recMsg").textContent="saved ✓";
+    for (const id of ["m_weight","m_bf","m_waist","m_hips","m_chest","m_shoulder","m_arm","m_thigh"]) $(id).value="";
+    loadBody(); setTimeout(()=>{ if($("recMsg")) $("recMsg").textContent=""; },2500);
+  } catch(e){ if(person===who && e.message!=="pin") $("recMsg").textContent="error: "+e.message; }
+  finally { $("recSave").disabled=false; }
 }
 
-// ---------- VOICE MODE (one button: listen + speak, hands-free) ----------
-function updateVoiceBtn(){
-  const b = $("voiceBtn");
-  b.classList.toggle("on", voiceMode);
-  b.classList.toggle("rec", listening);
-  b.textContent = speaking ? "🔊" : "🎙";
+// ---------- CHAT (drawer + threads) ----------
+function openDrawer(){ drawerShown=true; $("drawer").classList.add("on"); renderThread(); if(!convosLoaded[person]) loadConvos(); }
+function closeDrawer(){ drawerShown=false; $("drawer").classList.remove("on"); $("msgInput").blur(); loadTab(); }
+function newChat(){ convo[person] = {id:null,title:"New chat",msgs:[]}; closeConvoList(); openDrawer(); renderThread(); $("msgInput").focus(); }
+function openConvoList(){ $("convoList").classList.add("on"); loadConvos(); }
+function closeConvoList(){ $("convoList").classList.remove("on"); }
+
+async function loadConvos(){
+  const who = person;
+  try {
+    const d = await api("list_convos",{ person: who });
+    if (person!==who) return;
+    convos[who] = d.conversations || []; convosLoaded[who]=true; renderConvoList();
+  } catch(e){}
 }
-function primeSpeech(){                       // unlock iOS TTS inside the user tap
-  if (!("speechSynthesis" in window)) return;
-  try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch(e){}
+function renderConvoList(){
+  const el = $("clist"); const list = convos[person];
+  el.innerHTML = list.length ? list.map(c=>`<button class="crow" onclick="openConvo(${c.id})">${esc(c.title||"Chat")}<span class="cwhen">${esc((c.updated_at||"").slice(0,10))}</span></button>`).join("") : `<div class="empty" style="padding:20px 16px">No conversations yet. Start one below.</div>`;
+}
+async function openConvo(id){
+  const who = person;
+  try {
+    const d = await api("history",{ person: who, conversation_id: id });
+    if (person!==who) return;
+    const c = (convos[who]||[]).find(x=>x.id===id);
+    convo[who] = { id, title: c?c.title:"Chat", msgs: (d.messages||[]).map(m=>({role:m.role,content:m.content})) };
+    closeConvoList(); openDrawer(); renderThread();
+  } catch(e){}
+}
+function renderThread(){
+  const c = convo[person];
+  $("dtitle").textContent = c.title || "New chat";
+  const el = $("thread");
+  if (!c.msgs.length){
+    el.innerHTML = `<div class="hint">Ask about your week, your plans, or anything on any screen.</div><div class="starters">${STARTERS[person].map(s=>`<button onclick="quickAsk('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join("")}</div>`;
+    return;
+  }
+  el.innerHTML = c.msgs.map(m=>`<div class="msg ${m.role==="user"?"user":""}">${esc(m.content)}</div>`).join("") + (busy?`<div class="thinking">coach is thinking…</div>`:"");
+  el.scrollTop = el.scrollHeight;
+}
+function quickAsk(s){ $("msgInput").value=s; send(); }
+
+async function send(){
+  const inp = $("msgInput"); const text = inp.value.trim();
+  if (!text || busy) return;
+  const who = person;
+  if (!drawerShown) openDrawer();
+  convo[who].msgs.push({ role:"user", content:text });
+  inp.value=""; busy=true; $("sendBtn").disabled=true;
+  if (person===who) renderThread();
+  let replyText = null;
+  try {
+    const d = await api("chat",{ person: who, conversation_id: convo[who].id, message:text });
+    convo[who].id = d.conversation_id ?? convo[who].id;
+    if (d.title && convo[who].title==="New chat") convo[who].title = d.title;
+    replyText = d.reply;
+    convo[who].msgs.push({ role:"assistant", content:d.reply });
+    convosLoaded[who] = false;   // list changed; refresh next open
+  } catch(e){ if(e.message!=="pin") convo[who].msgs.push({ role:"assistant", content:"Problem: "+e.message }); }
+  finally {
+    busy=false; $("sendBtn").disabled=false;
+    if (person===who) renderThread();
+    // a plan may have been tweaked; refresh the relevant tab underneath
+    if (person===who && (tab==="meal"||tab==="fitness")) loadPlans(tab);
+    if (voiceMode){ if(person===who && replyText) speak(replyText, ()=>{ if(voiceMode) startListening(); }); else startListening(); }
+  }
+}
+
+// ---------- VOICE ----------
+function updateVoiceBtn(){ const b=$("voiceBtn"); b.classList.toggle("on",voiceMode); b.classList.toggle("rec",listening); b.textContent = speaking?"🔊":"🎙"; }
+let ttsVoice = null;
+function warmVoices(){ if(!("speechSynthesis" in window)) return; try { const vs=speechSynthesis.getVoices(); ttsVoice = vs.find(v=>/en[-_]/i.test(v.lang)) || vs[0] || null; } catch(e){} }
+function primeSpeech(){
+  if(!("speechSynthesis" in window)) return;
+  try { warmVoices(); speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance("");   // empty utterance in the tap unlocks iOS TTS
+    u.lang="en-US"; u.volume=1; if(ttsVoice) u.voice=ttsVoice;
+    speechSynthesis.speak(u); speechSynthesis.resume();
+  } catch(e){}
 }
 function toggleVoice(){
-  voiceMode = !voiceMode;
-  if (voiceMode){ primeSpeech(); startListening(); }
-  else { stopListening(); if (window.speechSynthesis) speechSynthesis.cancel(); speaking = false; }
+  voiceMode=!voiceMode;
+  if (voiceMode){ primeSpeech(); if(!drawerShown) openDrawer(); startListening(); }
+  else { stopListening(); if(window.speechSynthesis) speechSynthesis.cancel(); speaking=false; }
   updateVoiceBtn();
 }
 function startListening(){
-  if (!voiceMode || listening || busy || speaking) return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR){ $("msgInput").placeholder = "Voice input isn't supported here — tap the mic on your keyboard"; return; }
-  recog = new SR(); recog.lang = "en-US"; recog.interimResults = false; recog.maxAlternatives = 1;
-  recog.onresult = (e) => { const t = (e.results[0][0].transcript || "").trim(); if (t){ $("msgInput").value = t; send(); } };
-  recog.onerror = () => {};
-  recog.onend = () => { listening = false; updateVoiceBtn(); if (voiceMode && !busy && !speaking) setTimeout(startListening, 300); };
-  try { recog.start(); listening = true; updateVoiceBtn(); } catch(e){ listening = false; }
+  if(!voiceMode||listening||busy||speaking) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ $("msgInput").placeholder="Voice input isn't supported here — tap the mic on your keyboard"; return; }
+  recog = new SR(); recog.lang="en-US"; recog.interimResults=false; recog.maxAlternatives=1;
+  recog.onresult=(e)=>{ const t=(e.results[0][0].transcript||"").trim(); if(t){ $("msgInput").value=t; send(); } };
+  recog.onerror=()=>{};
+  recog.onend=()=>{ listening=false; updateVoiceBtn(); if(voiceMode && !busy && !speaking) setTimeout(startListening,300); };
+  try { recog.start(); listening=true; updateVoiceBtn(); } catch(e){ listening=false; }
 }
-function stopListening(){
-  listening = false;
-  if (recog){ try { recog.onend = null; recog.stop(); } catch(e){} recog = null; }
-  updateVoiceBtn();
-}
-function speak(t, onDone){
-  if (!("speechSynthesis" in window) || !t){ if (onDone) onDone(); return; }
+function stopListening(){ listening=false; if(recog){ try{ recog.onend=null; recog.stop(); }catch(e){} recog=null; } updateVoiceBtn(); }
+function speak(t,onDone){
+  if(!("speechSynthesis" in window)||!t){ if(onDone) onDone(); return; }
   try {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(String(t).slice(0, 900)); u.rate = 1.0;
-    speaking = true; updateVoiceBtn();
-    u.onend = () => { speaking = false; updateVoiceBtn(); if (onDone) onDone(); };
-    u.onerror = () => { speaking = false; updateVoiceBtn(); if (onDone) onDone(); };
+    if(!ttsVoice) warmVoices();
+    const u=new SpeechSynthesisUtterance(String(t).slice(0,900));
+    u.rate=1.0; u.lang="en-US"; u.volume=1; if(ttsVoice) u.voice=ttsVoice;
+    speaking=true; updateVoiceBtn();
+    u.onend=()=>{ speaking=false; updateVoiceBtn(); if(onDone) onDone(); };
+    u.onerror=()=>{ speaking=false; updateVoiceBtn(); if(onDone) onDone(); };
     speechSynthesis.speak(u);
-  } catch(e){ speaking = false; if (onDone) onDone(); }
+    speechSynthesis.resume();   // iOS often leaves the synth paused
+  } catch(e){ speaking=false; if(onDone) onDone(); }
 }
 
 // ---------- boot ----------
 updateVoiceBtn();
+if ("speechSynthesis" in window){ warmVoices(); try { speechSynthesis.onvoiceschanged = warmVoices; } catch(e){} }
 if (pin) loadTab();
-
-// keep the input bar above the iOS soft keyboard
 if (window.visualViewport){
   const vv = window.visualViewport;
-  const fit = () => { document.body.style.height = vv.height + "px"; };
-  vv.addEventListener("resize", fit);
-  vv.addEventListener("scroll", fit);
-  fit();
+  const fit = () => { const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop); document.documentElement.style.setProperty("--kb", kb+"px"); };
+  vv.addEventListener("resize",fit); vv.addEventListener("scroll",fit); fit();
 }
-
 if ("serviceWorker" in navigator){
-  const hadController = !!navigator.serviceWorker.controller;   // only reload on a real update, not first install
+  const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js").catch(()=>{});
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) location.reload(); });
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{ if(hadController) location.reload(); });
 }
 console.log("cadence build", APP_BUILD);
 </script>
