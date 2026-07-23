@@ -2,68 +2,114 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#0B7285">
-<title>Coach</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,700;125,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cadence">
+<meta name="theme-color" content="#0C2233">
+<title>Cadence</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,700;125,800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  :root{ --accent:#0B7285; --accent-soft:#E6F3F5; --ink:#1A2421; --fog:#F2F4F3; --line:#DDE3E1; --muted:#6E7A76; --flag:#C92A2A; }
+  :root{ --accent:#0B7285; --accent-soft:#E6F3F5; --ink:#1A2421; --fog:#F2F4F3; --line:#DDE3E1; --muted:#6E7A76; --flag:#C92A2A; --navy:#0C2233; }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{background:var(--fog);color:var(--ink);font:400 15px/1.55 'Inter',system-ui,sans-serif;display:flex;flex-direction:column}
+  body{background:var(--fog);color:var(--ink);font:400 15px/1.55 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
   button{cursor:pointer;font-family:inherit}
-  input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
 
-  header{background:#fff;border-bottom:3px solid var(--accent);padding:12px 16px}
+  header{background:var(--navy);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-top)) 16px}
   .hrow{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto}
-  .eyebrow{font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
-  h1{font:800 24px/1 'Archivo',sans-serif;font-stretch:125%;text-transform:uppercase}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand svg{width:26px;height:26px;flex:none}
+  .brand h1{font:800 21px/1 'Archivo',sans-serif;font-stretch:125%;text-transform:uppercase;letter-spacing:.02em}
   .toggle{display:flex;gap:6px}
-  .toggle button{border:1.5px solid var(--line);background:#fff;color:var(--muted);padding:6px 12px;font:600 12px 'IBM Plex Mono',monospace}
-  .toggle button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .toggle button{border:1.5px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.7);padding:6px 13px;font:600 12px 'IBM Plex Mono',monospace;border-radius:2px}
+  .toggle button.on{border-color:var(--accent);background:var(--accent);color:#fff}
 
-  .band{max-width:760px;margin:0 auto;width:100%;padding:12px 16px 0}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
-  .stat{background:#fff;border:1px solid var(--line);padding:10px 12px;min-width:0}
-  .stat .v{font:600 17px 'IBM Plex Mono',monospace;white-space:nowrap}
-  .stat .v small{font-size:11px;color:var(--muted)}
-  .stat .l{font-size:10.5px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
-  .fresh{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);padding:6px 2px 0}
-  .brief{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:10px;font-size:14px;line-height:1.6;color:var(--ink)}
+  nav.tabs{background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:2px;padding:0 8px}
+  nav.tabs button{border:none;background:none;color:var(--muted);padding:11px 14px;font:600 12.5px 'IBM Plex Mono',monospace;border-bottom:2.5px solid transparent;text-transform:uppercase;letter-spacing:.04em}
+  nav.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .wrap{max-width:760px;margin:0 auto;width:100%;padding:14px 16px}
+  .view{display:none}
+  .view.on{display:block}
+
+  .brief{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.6}
   .brief.loading{color:var(--muted);font:500 12px 'IBM Plex Mono',monospace}
   .brief .lbl{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px}
 
-  #chat{flex:1;overflow-y:auto;padding:14px 16px;max-width:760px;margin:0 auto;width:100%}
-  .msg{max-width:85%;padding:10px 14px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;margin-bottom:10px;border:1px solid var(--line);background:#fff}
-  .msg.user{margin-left:auto;background:var(--accent);color:#fff;border:none}
-  .starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .starters button{border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px}
-  .thinking{font:500 12px 'IBM Plex Mono',monospace;color:var(--muted)}
-  .err{background:#FDECEC;border:1px solid var(--flag);padding:12px;font-size:13px;margin-bottom:10px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;margin-bottom:6px}
+  .stat{background:#fff;border:1px solid var(--line);padding:9px 11px;min-width:0}
+  .stat .v{font:600 16px 'IBM Plex Mono',monospace;white-space:nowrap}
+  .stat .v small{font-size:11px;color:var(--muted)}
+  .stat .l{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+  .fresh{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);padding:4px 2px 10px}
+  .err{background:#FDECEC;border:1px solid var(--flag);padding:11px;font-size:13px;margin-bottom:10px;color:#7a1a1a}
+  .hidden{display:none !important}
 
-  .inputbar{background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
-  .irow{display:flex;gap:8px;max-width:760px;margin:0 auto}
-  .irow input{flex:1;border:1.5px solid var(--line);padding:11px 13px;font-size:16px;background:#F9FAFA}
-  .irow button{background:var(--accent);color:#fff;border:none;padding:0 18px;font:600 13px 'IBM Plex Mono',monospace}
-  .irow button:disabled{background:#B9C2BF}
+  #chat .msg{max-width:88%;padding:10px 13px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;margin-bottom:9px;border:1px solid var(--line);background:#fff;border-radius:3px}
+  #chat .msg.user{margin-left:auto;background:var(--accent);color:#fff;border:none}
+  .starters{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .starters button{border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px;border-radius:3px}
+  .thinking{font:500 12px 'IBM Plex Mono',monospace;color:var(--muted);padding:2px}
+  .histbtn{font:600 11px 'IBM Plex Mono',monospace;color:var(--accent);background:none;border:1px solid var(--line);padding:6px 10px;margin-bottom:10px;border-radius:3px}
 
-  /* PIN screen */
-  #pinScreen{position:fixed;inset:0;background:var(--fog);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;z-index:10}
-  #pinScreen .card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--accent);padding:28px;max-width:340px;width:100%;text-align:center}
+  .inputbar{background:#fff;border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+  .irow{display:flex;gap:7px;max-width:760px;margin:0 auto;align-items:center}
+  .irow input{flex:1;border:1.5px solid var(--line);padding:11px 13px;font-size:16px;background:#F9FAFA;border-radius:3px}
+  .iconbtn{background:#fff;border:1.5px solid var(--line);width:42px;height:42px;flex:none;border-radius:3px;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+  .iconbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .iconbtn.rec{border-color:var(--flag);color:var(--flag);background:#FDECEC;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .irow .send{background:var(--accent);color:#fff;border:none;padding:0 16px;height:42px;font:600 13px 'IBM Plex Mono',monospace;border-radius:3px}
+  .irow .send:disabled{background:#B9C2BF}
+
+  .plan{background:#fff;border:1px solid var(--line);padding:16px 18px;font-size:14.5px;line-height:1.6}
+  .plan h2{font:700 15px 'Inter';margin:14px 0 6px;color:var(--navy)}
+  .plan h3{font:700 13.5px 'Inter';margin:11px 0 4px;color:var(--accent);text-transform:uppercase;letter-spacing:.03em;font-size:12px}
+  .plan ul{margin:4px 0 8px 18px}.plan li{margin:2px 0}
+  .plan p{margin:6px 0}
+  .plan strong{font-weight:600}
+  .planhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+  .planhead .t{font:800 17px 'Archivo';font-stretch:125%;text-transform:uppercase}
+  .planhead .meta{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted)}
+  .btn{background:var(--accent);color:#fff;border:none;padding:9px 14px;font:600 12.5px 'IBM Plex Mono',monospace;border-radius:3px}
+  .btn.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
+  .empty{color:var(--muted);font-size:14px;padding:22px 4px;text-align:center;line-height:1.6}
+
+  .card{background:#fff;border:1px solid var(--line);padding:15px 16px;margin-bottom:12px}
+  .card h2{font:800 15px 'Archivo';font-stretch:125%;text-transform:uppercase;margin-bottom:12px}
+  .nudge{background:#FFF7E6;border:1px solid #F2D191;border-left:3px solid #E8A317;padding:11px 13px;font-size:13.5px;margin-bottom:12px;line-height:1.5}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .fld label{display:block;font:600 10.5px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .fld input{width:100%;border:1.5px solid var(--line);padding:9px 10px;font-size:16px;background:#F9FAFA;border-radius:3px}
+  .savebar{margin-top:12px;display:flex;gap:8px;align-items:center}
+  .saved{font:500 12px 'IBM Plex Mono',monospace;color:var(--accent)}
+  table.hist{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  table.hist th{text-align:left;font:600 10px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--line)}
+  table.hist td{padding:6px 6px;border-bottom:1px solid var(--fog);font-family:'IBM Plex Mono',monospace}
+
+  #pinScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;z-index:20}
+  #pinScreen .card{border-top:4px solid var(--accent);max-width:330px;width:100%;text-align:center;color:var(--ink)}
+  #pinScreen .brand{justify-content:center;margin-bottom:6px}
   #pinScreen input{width:100%;border:1.5px solid var(--line);padding:12px;font:600 22px 'IBM Plex Mono',monospace;text-align:center;letter-spacing:.3em;margin:14px 0}
   #pinScreen button{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;font:600 14px 'IBM Plex Mono',monospace}
-  .hidden{display:none !important}
 </style>
 </head>
 <body>
 
 <div id="pinScreen">
   <div class="card">
-    <div class="eyebrow">Household Coach</div>
-    <h1 style="font-size:20px;margin-top:6px">Enter PIN</h1>
-    <input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••">
+    <div class="brand" style="color:var(--navy)">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0C2233"/><polyline points="14,50 33,50 40,32 47,66 54,20 61,62 68,50 88,50" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="88" cy="50" r="6" fill="#2DD4BF"/></svg>
+      <h1 style="font:800 22px 'Archivo';font-stretch:125%">CADENCE</h1>
+    </div>
+    <div style="color:var(--muted);font-size:13px">Household coach</div>
+    <input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="enter PIN">
     <div id="pinErr" style="color:var(--flag);font-size:13px;margin-bottom:10px" class="hidden">Wrong PIN, try again.</div>
     <button onclick="submitPin()">Open</button>
   </div>
@@ -71,9 +117,9 @@
 
 <header>
   <div class="hrow">
-    <div>
-      <div class="eyebrow">Coach</div>
-      <h1 id="who">Jess</h1>
+    <div class="brand">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#123A4E"/><polyline points="14,50 33,50 40,32 47,66 54,20 61,62 68,50 88,50" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="88" cy="50" r="6" fill="#2DD4BF"/></svg>
+      <h1>Cadence</h1>
     </div>
     <div class="toggle">
       <button id="btn-jess" class="on" onclick="setPerson('jess')">Jess</button>
@@ -82,183 +128,373 @@
   </div>
 </header>
 
-<div class="band">
-  <div id="briefing" class="brief hidden"></div>
-  <div id="dataErr" class="err hidden"></div>
-  <div id="stats" class="stats"></div>
-  <div id="fresh" class="fresh"></div>
+<nav class="tabs">
+  <button id="tab-coach" class="on" onclick="setTab('coach')">Coach</button>
+  <button id="tab-meal" onclick="setTab('meal')">Meal</button>
+  <button id="tab-fitness" onclick="setTab('fitness')">Fitness</button>
+  <button id="tab-body" onclick="setTab('body')">Body</button>
+</nav>
+
+<div class="scroll" id="scroll">
+  <!-- COACH -->
+  <div id="view-coach" class="view on">
+    <div class="wrap">
+      <div id="dataErr" class="err hidden"></div>
+      <div id="briefing" class="brief hidden"></div>
+      <div id="stats" class="stats"></div>
+      <div id="fresh" class="fresh"></div>
+      <button id="histBtn" class="histbtn hidden" onclick="loadHistory()">Load earlier conversation</button>
+      <div id="chat"></div>
+    </div>
+  </div>
+  <!-- MEAL -->
+  <div id="view-meal" class="view">
+    <div class="wrap">
+      <div class="planhead">
+        <div class="t">Meal Plan</div>
+        <button class="btn" id="mealGen" onclick="makePlan('meal')">Update with coach</button>
+      </div>
+      <div id="mealBody"></div>
+    </div>
+  </div>
+  <!-- FITNESS -->
+  <div id="view-fitness" class="view">
+    <div class="wrap">
+      <div class="planhead">
+        <div class="t">Fitness Plan</div>
+        <button class="btn" id="fitGen" onclick="makePlan('fitness')">Update with coach</button>
+      </div>
+      <div id="fitBody"></div>
+    </div>
+  </div>
+  <!-- BODY -->
+  <div id="view-body" class="view">
+    <div class="wrap">
+      <div id="bodyNudge" class="nudge hidden"></div>
+      <div class="card">
+        <h2>Record today</h2>
+        <div class="grid2">
+          <div class="fld"><label>Weight (kg)</label><input id="m_weight" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Body fat (%)</label><input id="m_bf" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Waist (cm)</label><input id="m_waist" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Hips (cm)</label><input id="m_hips" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Chest (cm)</label><input id="m_chest" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Shoulders (cm)</label><input id="m_shoulder" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Arm (cm)</label><input id="m_arm" inputmode="decimal" placeholder="—"></div>
+          <div class="fld"><label>Thigh (cm)</label><input id="m_thigh" inputmode="decimal" placeholder="—"></div>
+        </div>
+        <div class="savebar">
+          <button class="btn" id="recSave" onclick="saveRecord()">Save</button>
+          <span id="recMsg" class="saved"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>History</h2>
+        <div id="bodyHist"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div id="chat"></div>
-
-<div class="inputbar">
+<div class="inputbar" id="inputbar">
   <div class="irow">
+    <button id="micBtn" class="iconbtn" onclick="toggleMic()" title="Dictate">🎤</button>
     <input id="msgInput" placeholder="Message the coach…" onkeydown="if(event.key==='Enter')send()">
-    <button id="sendBtn" onclick="send()">Send</button>
+    <button id="speakBtn" class="iconbtn" onclick="toggleSpeak()" title="Speak replies">🔊</button>
+    <button id="sendBtn" class="send" onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23a";
+const APP_BUILD = "2026-07-23b";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
-  jess: ["How was my week?", "Am I eating enough protein?", "Build me an upper-body day"],
-  billy: ["How's my fueling vs training?", "What's on the plan this week?", "How was my week?"],
+  jess: ["How was my week?", "Build my upper-body plan", "What should I eat today?"],
+  billy: ["How's my fueling vs training?", "What's on my plan this week?", "Am I recovering ok?"],
 };
 
 let person = "jess";
+let tab = "coach";
 let pin = "";
-let history = { jess: [], billy: [] };
 let busy = false;
+let speakOn = false;
+let chats = { jess: [], billy: [] };      // rendered chat cache per person
+let histLoaded = { jess: false, billy: false };
+const plansCache = { jess: {}, billy: {} };
 
-// Remember PIN on this device where storage is available; degrade silently otherwise
 try { pin = localStorage.getItem("coach_pin") || ""; } catch (e) {}
+try { speakOn = localStorage.getItem("coach_speak") === "1"; } catch (e) {}
 if (pin) document.getElementById("pinScreen").classList.add("hidden");
 
-function submitPin() {
-  const v = document.getElementById("pinInput").value.trim();
-  if (!v) return;
-  pin = v;
-  try { localStorage.setItem("coach_pin", v); } catch (e) {}
-  document.getElementById("pinScreen").classList.add("hidden");
-  loadData();
+const $ = (id) => document.getElementById(id);
+const fmt = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// tiny, safe markdown: escape first, then format a limited subset
+function md(t){
+  let h = esc(t);
+  const lines = h.split("\n"); let out = ""; let inUl = false;
+  const inline = (s) => s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+  for (let raw of lines){
+    const l = raw.trim();
+    if (/^##\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out += "<h2>"+inline(l.replace(/^##\s+/,""))+"</h2>"; }
+    else if (/^###\s+/.test(l)){ if(inUl){out+="</ul>";inUl=false;} out += "<h3>"+inline(l.replace(/^###\s+/,""))+"</h3>"; }
+    else if (/^[-*]\s+/.test(l)){ if(!inUl){out+="<ul>";inUl=true;} out += "<li>"+inline(l.replace(/^[-*]\s+/,""))+"</li>"; }
+    else if (l === ""){ if(inUl){out+="</ul>";inUl=false;} }
+    else { if(inUl){out+="</ul>";inUl=false;} out += "<p>"+inline(l)+"</p>"; }
+  }
+  if(inUl) out+="</ul>";
+  return out;
 }
 
-function setPerson(p) {
+async function api(action, extra){
+  const r = await fetch(CHAT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-coach-pin": pin },
+    body: JSON.stringify(Object.assign({ person, action }, extra || {})),
+  });
+  if (r.status === 401){
+    try { localStorage.removeItem("coach_pin"); } catch(e){}
+    pin = "";
+    $("pinScreen").classList.remove("hidden");
+    $("pinErr").classList.remove("hidden");
+    throw new Error("pin");
+  }
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
+
+function submitPin(){
+  const v = $("pinInput").value.trim();
+  if (!v) return;
+  pin = v;
+  try { localStorage.setItem("coach_pin", v); } catch(e){}
+  $("pinScreen").classList.add("hidden");
+  loadTab();
+}
+
+function setPerson(p){
+  if (p === person) return;
   person = p;
   const [acc, soft] = ACCENTS[p];
   document.documentElement.style.setProperty("--accent", acc);
   document.documentElement.style.setProperty("--accent-soft", soft);
-  document.getElementById("who").textContent = p === "jess" ? "Jess" : "Billy";
-  document.getElementById("btn-jess").classList.toggle("on", p === "jess");
-  document.getElementById("btn-billy").classList.toggle("on", p === "billy");
-  renderChat();
-  loadData();
+  $("btn-jess").classList.toggle("on", p === "jess");
+  $("btn-billy").classList.toggle("on", p === "billy");
+  plansCache.jess = plansCache.jess; // no-op, keep caches per person
+  loadTab();
 }
 
-const fmt = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
+function setTab(t){
+  tab = t;
+  for (const k of ["coach","meal","fitness","body"]){
+    $("tab-"+k).classList.toggle("on", k === t);
+    $("view-"+k).classList.toggle("on", k === t);
+  }
+  $("inputbar").style.display = (t === "coach") ? "" : "none";
+  $("scroll").scrollTop = 0;
+  loadTab();
+}
 
-async function loadData() {
-  const errEl = document.getElementById("dataErr");
-  errEl.classList.add("hidden");
+function loadTab(){
   if (!pin) return;
+  if (tab === "coach") loadCoach();
+  else if (tab === "meal") loadPlan("meal");
+  else if (tab === "fitness") loadPlan("fitness");
+  else if (tab === "body") loadBody();
+  syncSpeakBtn();
+}
+
+// ---------- COACH ----------
+async function loadCoach(){
+  $("dataErr").classList.add("hidden");
+  renderChat();
+  loadBriefing();
   try {
-    const r = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-coach-pin": pin },
-      body: JSON.stringify({ person, action: "stats" }),
-    });
-    if (r.status === 401) {
-      try { localStorage.removeItem("coach_pin"); } catch (e) {}
-      pin = "";
-      document.getElementById("pinScreen").classList.remove("hidden");
-      document.getElementById("pinErr").classList.remove("hidden");
-      return;
-    }
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
+    const d = await api("stats");
     const a = d.avg7 || {};
-    const cells = [
-      ["7d avg kcal in", fmt(a.calories_in), ""],
-      ["7d avg protein", fmt(a.protein_g), "g"],
-      ["7d avg active", fmt(a.active_kcal), "kcal"],
-      ["7d avg steps", fmt(a.steps), ""],
-    ];
-    if (a.sleep_hours != null) cells.push(["7d avg sleep", fmt(a.sleep_hours, 1), "h"]);
-    if (a.hrv_ms != null) cells.push(["7d avg HRV", fmt(a.hrv_ms), "ms"]);
-    document.getElementById("stats").innerHTML = cells.map(([l, v, u]) => `<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
-    document.getElementById("fresh").textContent = (d.latest_date ? `latest data: ${d.latest_date} \u00b7 decisions run on weekly trends, not single days` : "no data yet for this athlete") + ` \u00b7 v${APP_BUILD}`;
-    loadBriefing();
-  } catch (e) {
-    errEl.textContent = "Couldn't load tracking data (" + e.message + "). Chat still works.";
-    errEl.classList.remove("hidden");
+    const cells = [];
+    if (d.weight_kg != null) cells.push(["weight", fmt(d.weight_kg,1), "kg"]);
+    cells.push(["7d kcal in", fmt(a.calories_in), ""]);
+    cells.push(["7d protein", fmt(a.protein_g), "g"]);
+    cells.push(["7d active", fmt(a.active_kcal), "kcal"]);
+    cells.push(["7d steps", fmt(a.steps), ""]);
+    if (a.sleep_hours != null) cells.push(["7d sleep", fmt(a.sleep_hours,1), "h"]);
+    if (a.hrv_ms != null) cells.push(["7d HRV", fmt(a.hrv_ms), "ms"]);
+    $("stats").innerHTML = cells.map(([l,v,u]) => `<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
+    $("fresh").textContent = (d.latest_date ? `latest data: ${d.latest_date}` : "no tracked data yet") + ` · v${APP_BUILD}`;
+  } catch(e){
+    if (e.message === "pin") return;
+    $("dataErr").textContent = "Couldn't load data (" + e.message + "). Chat still works.";
+    $("dataErr").classList.remove("hidden");
   }
+  if (!histLoaded[person]) loadHistory();
 }
 
-async function loadBriefing() {
-  const el = document.getElementById("briefing");
-  el.className = "brief loading";
-  el.textContent = "reading your week\u2026";
+async function loadBriefing(){
+  const el = $("briefing");
+  el.className = "brief loading"; el.textContent = "reading your week…";
   try {
-    const r = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-coach-pin": pin },
-      body: JSON.stringify({ person, action: "briefing" }),
-    });
-    if (!r.ok) { el.className = "brief hidden"; return; }
-    const d = await r.json();
-    if (d.text) {
-      el.className = "brief";
-      el.innerHTML = `<span class="lbl">Today's read \u00b7 ${person === "jess" ? "Jess" : "Billy"}</span>` + d.text.replace(/</g, "&lt;");
-    } else {
-      el.className = "brief hidden";
-    }
-  } catch (e) {
-    el.className = "brief hidden";
-  }
+    const d = await api("briefing");
+    if (d.text){ el.className = "brief"; el.innerHTML = `<span class="lbl">Today's read · ${person==="jess"?"Jess":"Billy"}</span>` + esc(d.text); }
+    else el.className = "brief hidden";
+  } catch(e){ el.className = "brief hidden"; }
 }
 
-function renderChat() {
-  const el = document.getElementById("chat");
-  const msgs = history[person];
-  if (!msgs.length) {
-    el.innerHTML = `<div style="color:var(--muted);font-size:14px;padding-top:8px">Ask about your week, your plan, or what to adjust.</div>
-      <div class="starters">${STARTERS[person].map(s => `<button onclick="document.getElementById('msgInput').value='${s}'">${s}</button>`).join("")}</div>`;
+async function loadHistory(){
+  try {
+    const d = await api("history");
+    chats[person] = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
+    histLoaded[person] = true;
+    $("histBtn").classList.add("hidden");
+    renderChat();
+  } catch(e){}
+}
+
+function renderChat(){
+  const el = $("chat");
+  const msgs = chats[person];
+  if (!msgs.length){
+    el.innerHTML = `<div style="color:var(--muted);font-size:14px;padding-top:6px">Ask about your week, your plans, or what to adjust today.</div>
+      <div class="starters">${STARTERS[person].map(s=>`<button onclick="quickAsk('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join("")}</div>`;
     return;
   }
-  el.innerHTML = msgs.map(m => `<div class="msg ${m.role === "user" ? "user" : ""}">${m.content.replace(/</g, "&lt;")}</div>`).join("") + (busy ? `<div class="thinking">coach is thinking…</div>` : "");
-  el.scrollTop = el.scrollHeight;
+  el.innerHTML = msgs.map(m => `<div class="msg ${m.role==="user"?"user":""}">${esc(m.content)}</div>`).join("") + (busy ? `<div class="thinking">coach is thinking…</div>` : "");
+  $("scroll").scrollTop = $("scroll").scrollHeight;
 }
 
-async function send() {
-  const inp = document.getElementById("msgInput");
+function quickAsk(s){ $("msgInput").value = s; send(); }
+
+async function send(){
+  const inp = $("msgInput");
   const text = inp.value.trim();
   if (!text || busy) return;
-  history[person].push({ role: "user", content: text });
+  const who = person;                     // capture: reply must land on THIS person only
+  chats[who].push({ role: "user", content: text });
   inp.value = ""; busy = true;
-  document.getElementById("sendBtn").disabled = true;
-  renderChat();
+  $("sendBtn").disabled = true;
+  if (person === who) renderChat();
   try {
-    const r = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-coach-pin": pin },
-      body: JSON.stringify({ person, messages: history[person] }),
-    });
-    const data = await r.json();
-    if (r.status === 401) {
-      try { localStorage.removeItem("coach_pin"); } catch (e) {}
-      document.getElementById("pinScreen").classList.remove("hidden");
-      document.getElementById("pinErr").classList.remove("hidden");
-      history[person].pop();
-    } else if (!r.ok) {
-      history[person].push({ role: "assistant", content: "Problem: " + (data.error || "unknown") });
-    } else {
-      history[person].push({ role: "assistant", content: data.reply });
-    }
-  } catch (e) {
-    history[person].push({ role: "assistant", content: "Connection problem: " + e.message + ". Try again." });
+    const d = await api("chat", { person: who, message: text });
+    chats[who].push({ role: "assistant", content: d.reply });
+    if (speakOn && person === who) speak(d.reply);
+  } catch(e){
+    if (e.message !== "pin") chats[who].push({ role: "assistant", content: "Problem: " + e.message });
   } finally {
     busy = false;
-    document.getElementById("sendBtn").disabled = false;
-    renderChat();
+    $("sendBtn").disabled = false;
+    if (person === who) renderChat();
   }
 }
 
-if (pin) loadData();
-renderChat();
-
-// Keep the installed home-screen app self-updating via a network-first service worker.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
-  let reloaded = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloaded) return;
-    reloaded = true;
-    location.reload();
-  });
+// ---------- PLANS ----------
+async function loadPlan(kind){
+  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
+  bodyEl.innerHTML = `<div class="empty">loading…</div>`;
+  try {
+    const d = plansCache[person][kind] || await api("plans");
+    plansCache[person] = d;
+    const plan = kind === "meal" ? d.meal_plan : d.fitness_plan;
+    renderPlan(kind, plan);
+  } catch(e){ if(e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
 }
-console.log("coach build", APP_BUILD);
+
+function renderPlan(kind, plan){
+  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
+  if (!plan || !plan.content){
+    bodyEl.innerHTML = `<div class="empty">No ${kind} plan yet.<br>Tap <strong>Update with coach</strong> to generate one from your goals and latest data.</div>`;
+    return;
+  }
+  bodyEl.innerHTML = `<div class="planhead"><span class="meta">updated ${esc(plan.updated||"")}</span></div><div class="plan">${md(plan.content)}</div>`;
+}
+
+async function makePlan(kind){
+  const btn = kind === "meal" ? $("mealGen") : $("fitGen");
+  const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
+  btn.disabled = true; const old = btn.textContent; btn.textContent = "thinking…";
+  bodyEl.innerHTML = `<div class="empty">coach is writing your ${kind} plan…</div>`;
+  try {
+    const d = await api("make_plan", { kind });
+    const plan = { updated: d.updated, content: d.content };
+    plansCache[person][kind === "meal" ? "meal_plan" : "fitness_plan"] = plan;
+    renderPlan(kind, plan);
+  } catch(e){ if(e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't generate (${esc(e.message)}).</div>`; }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+
+// ---------- BODY ----------
+async function loadBody(){
+  try {
+    const d = await api("body");
+    const rows = d.entries || [];
+    const last = rows[0];
+    const daysSince = last ? Math.round((Date.now() - new Date(last.date+"T00:00:00").getTime())/86400000) : null;
+    const nudge = $("bodyNudge");
+    if (!last || daysSince >= 7){
+      nudge.classList.remove("hidden");
+      nudge.textContent = last ? `Last weigh-in was ${daysSince} days ago. Log today so the coach can track your trend.` : "No weight or measurements logged yet. Record your first entry, weekly data is how the coach tunes your plan.";
+    } else nudge.classList.add("hidden");
+    const keys = [["weight_kg","kg"],["waist_cm","waist"],["hips_cm","hips"],["chest_cm","chest"],["arm_cm","arm"],["thigh_cm","thigh"]];
+    $("bodyHist").innerHTML = rows.length ? `<table class="hist"><tr><th>date</th><th>wt</th><th>waist</th><th>hips</th><th>chest</th><th>arm</th><th>thigh</th></tr>` +
+      rows.slice(0,20).map(r=>{ const m=r.measurements||{}; return `<tr><td>${esc(r.date)}</td><td>${r.weight_kg??"—"}</td><td>${m.waist_cm??"—"}</td><td>${m.hips_cm??"—"}</td><td>${m.chest_cm??"—"}</td><td>${m.arm_cm??"—"}</td><td>${m.thigh_cm??"—"}</td></tr>`; }).join("") + `</table>`
+      : `<div class="empty">No entries yet.</div>`;
+  } catch(e){ if(e.message!=="pin") $("bodyHist").innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
+}
+
+async function saveRecord(){
+  const g = (id) => { const v = $(id).value.trim(); return v === "" ? undefined : Number(v); };
+  const measurements = {};
+  const map = { m_waist:"waist_cm", m_hips:"hips_cm", m_chest:"chest_cm", m_shoulder:"shoulder_cm", m_arm:"arm_cm", m_thigh:"thigh_cm" };
+  for (const [id,k] of Object.entries(map)){ const v = g(id); if (v != null && !isNaN(v)) measurements[k] = v; }
+  const payload = { weight_kg: g("m_weight"), body_fat_pct: g("m_bf"), measurements };
+  $("recSave").disabled = true; $("recMsg").textContent = "saving…";
+  try {
+    await api("record", payload);
+    $("recMsg").textContent = "saved ✓";
+    for (const id of ["m_weight","m_bf","m_waist","m_hips","m_chest","m_shoulder","m_arm","m_thigh"]) $(id).value = "";
+    loadBody();
+    setTimeout(()=>{ $("recMsg").textContent=""; }, 2500);
+  } catch(e){ if(e.message!=="pin") $("recMsg").textContent = "error: " + e.message; }
+  finally { $("recSave").disabled = false; }
+}
+
+// ---------- VOICE ----------
+function syncSpeakBtn(){ $("speakBtn").classList.toggle("on", speakOn); }
+function toggleSpeak(){
+  speakOn = !speakOn;
+  try { localStorage.setItem("coach_speak", speakOn ? "1" : "0"); } catch(e){}
+  syncSpeakBtn();
+  if (!speakOn && window.speechSynthesis) speechSynthesis.cancel();
+}
+function speak(t){
+  if (!("speechSynthesis" in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(t).slice(0,700)); u.rate = 1.0; speechSynthesis.speak(u); } catch(e){}
+}
+let recog = null, recording = false;
+function toggleMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ $("msgInput").placeholder = "Tap the mic on your keyboard to dictate"; $("msgInput").focus(); return; }
+  if (recording){ try{ recog.stop(); }catch(e){} return; }
+  recog = new SR(); recog.lang = "en-US"; recog.interimResults = false; recog.maxAlternatives = 1;
+  recording = true; $("micBtn").classList.add("rec");
+  recog.onresult = (e) => { const t = e.results[0][0].transcript; $("msgInput").value = t; };
+  recog.onerror = () => {};
+  recog.onend = () => { recording = false; $("micBtn").classList.remove("rec"); if ($("msgInput").value.trim()) send(); };
+  try { recog.start(); } catch(e){ recording = false; $("micBtn").classList.remove("rec"); }
+}
+
+// ---------- boot ----------
+syncSpeakBtn();
+if (pin) loadTab();
+
+if ("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloaded) return; reloaded = true; location.reload(); });
+}
+console.log("cadence build", APP_BUILD);
 </script>
 </body>
 </html>
