@@ -15,8 +15,9 @@
 <style>
   :root{ --accent:#0B7285; --accent-soft:#E6F3F5; --ink:#1A2421; --fog:#F2F4F3; --line:#DDE3E1; --muted:#6E7A76; --flag:#C92A2A; --navy:#0C2233; --kb:0px; }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{background:var(--fog);color:var(--ink);font:400 15px/1.55 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  html{height:100%}
+  /* pin the whole app to the viewport so the shell (header + tabs) can never scroll; only .scroll scrolls */
+  body{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;background:var(--fog);color:var(--ink);font:400 15px/1.55 'Inter',system-ui,sans-serif;display:flex;flex-direction:column}
   button{cursor:pointer;font-family:inherit}
   input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
   .hidden{display:none !important}
@@ -34,7 +35,7 @@
   nav.tabs button{border:none;background:none;color:var(--muted);padding:12px 15px;font:600 12.5px 'IBM Plex Mono',monospace;border-bottom:2.5px solid transparent;text-transform:uppercase;letter-spacing:.04em}
   nav.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
 
-  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + var(--kb))}
+  .scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + var(--kb))}
   .wrap{max-width:760px;margin:0 auto;width:100%;padding:14px 16px}
   .view{display:none}
   .view.on{display:block}
@@ -231,7 +232,7 @@
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23g";
+const APP_BUILD = "2026-07-23h";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
   jess: ["How was my week?", "Tweak my meal plan", "What should I train today?"],
