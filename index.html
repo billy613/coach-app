@@ -88,10 +88,12 @@
   .irow .send{background:var(--accent);color:#fff;border:none;padding:0 16px;height:42px;font:600 13px 'IBM Plex Mono',monospace;border-radius:3px}
   .irow .send:disabled{background:#B9C2BF}
 
-  /* chat drawer (over the tabs, above the input bar) */
-  #drawer{position:fixed;inset:0;background:var(--fog);z-index:20;display:none;flex-direction:column}
+  /* chat drawer: fills the tab area; the app header + tabs stay visible/tappable above it */
+  #drawer{flex:1;min-height:0;background:var(--fog);display:none;flex-direction:column}
   #drawer.on{display:flex}
-  .dhead{background:var(--navy);color:#fff;display:flex;align-items:center;gap:8px;padding:12px 12px}
+  .scroll.hidden{display:none !important}
+  .dhead{background:var(--navy);color:#fff;display:flex;align-items:center;gap:8px;padding:11px 12px}
+  #convoList .dhead{padding-top:calc(11px + env(safe-area-inset-top))}
   .dhead .dtitle{flex:1;font:600 14px 'Inter';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dhead button{background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:3px;padding:7px 10px;font:600 11.5px 'IBM Plex Mono',monospace}
   .dthread{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(72px + var(--kb));max-width:760px;margin:0 auto;width:100%}
@@ -204,7 +206,7 @@
 <!-- chat drawer -->
 <div id="drawer">
   <div class="dhead">
-    <button onclick="closeDrawer()">✕</button>
+    <button onclick="closeDrawer()">‹ Done</button>
     <span class="dtitle" id="dtitle">New chat</span>
     <button onclick="openConvoList()">Chats</button>
     <button onclick="newChat()">＋ New</button>
@@ -214,7 +216,7 @@
 
 <!-- conversations list -->
 <div id="convoList">
-  <div class="dhead"><button onclick="closeConvoList()">✕</button><span class="dtitle">Conversations</span><button onclick="newChat()">＋ New</button></div>
+  <div class="dhead"><button onclick="closeConvoList()">‹ Back</button><span class="dtitle">Conversations</span><button onclick="newChat()">＋ New</button></div>
   <div class="clist" id="clist"></div>
 </div>
 
@@ -229,7 +231,7 @@
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23e";
+const APP_BUILD = "2026-07-23f";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
   jess: ["How was my week?", "Tweak my meal plan", "What should I train today?"],
@@ -312,6 +314,7 @@ function setPerson(p){
 }
 
 function setTab(t){
+  if (drawerShown){ drawerShown=false; $("drawer").classList.remove("on"); $("scroll").classList.remove("hidden"); $("msgInput").blur(); }
   tab = t;
   for (const k of ["today","meal","fitness","body"]){ $("tab-"+k).classList.toggle("on",k===t); $("view-"+k).classList.toggle("on",k===t); }
   $("scroll").scrollTop = 0;
@@ -419,8 +422,8 @@ async function saveRecord(){
 }
 
 // ---------- CHAT (drawer + threads) ----------
-function openDrawer(){ drawerShown=true; $("drawer").classList.add("on"); renderThread(); if(!convosLoaded[person]) loadConvos(); }
-function closeDrawer(){ drawerShown=false; $("drawer").classList.remove("on"); $("msgInput").blur(); loadTab(); }
+function openDrawer(){ drawerShown=true; $("scroll").classList.add("hidden"); $("drawer").classList.add("on"); renderThread(); if(!convosLoaded[person]) loadConvos(); }
+function closeDrawer(){ drawerShown=false; $("drawer").classList.remove("on"); $("scroll").classList.remove("hidden"); $("msgInput").blur(); loadTab(); }
 function newChat(){ convo[person] = {id:null,title:"New chat",msgs:[]}; closeConvoList(); openDrawer(); renderThread(); $("msgInput").focus(); }
 function openConvoList(){ if(convosLoaded[person]) renderConvoList(); else $("clist").innerHTML=`<div class="empty" style="padding:20px 16px">loading…</div>`; $("convoList").classList.add("on"); loadConvos(); }
 function closeConvoList(){ $("convoList").classList.remove("on"); }
