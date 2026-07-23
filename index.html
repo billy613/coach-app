@@ -100,6 +100,7 @@
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
+const APP_BUILD = "2026-07-23a";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
   jess: ["How was my week?", "Am I eating enough protein?", "Build me an upper-body day"],
@@ -167,7 +168,7 @@ async function loadData() {
     if (a.sleep_hours != null) cells.push(["7d avg sleep", fmt(a.sleep_hours, 1), "h"]);
     if (a.hrv_ms != null) cells.push(["7d avg HRV", fmt(a.hrv_ms), "ms"]);
     document.getElementById("stats").innerHTML = cells.map(([l, v, u]) => `<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
-    document.getElementById("fresh").textContent = d.latest_date ? `latest data: ${d.latest_date} \u00b7 decisions run on weekly trends, not single days` : "no data yet for this athlete";
+    document.getElementById("fresh").textContent = (d.latest_date ? `latest data: ${d.latest_date} \u00b7 decisions run on weekly trends, not single days` : "no data yet for this athlete") + ` \u00b7 v${APP_BUILD}`;
     loadBriefing();
   } catch (e) {
     errEl.textContent = "Couldn't load tracking data (" + e.message + "). Chat still works.";
@@ -246,6 +247,18 @@ async function send() {
 
 if (pin) loadData();
 renderChat();
+
+// Keep the installed home-screen app self-updating via a network-first service worker.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+}
+console.log("coach build", APP_BUILD);
 </script>
 </body>
 </html>
