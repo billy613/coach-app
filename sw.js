@@ -33,13 +33,17 @@ self.addEventListener("fetch", (e) => {
 
   if (isShell) {
     e.respondWith((async () => {
-      try {
-        const fresh = await fetch(req, { cache: "no-store" }); // always latest, skip HTTP cache
-        (await caches.open(CACHE)).put(SHELL, fresh.clone());
+      const cached = await caches.match(SHELL);
+      const network = fetch(req, { cache: "no-store" }).then((fresh) => {
+        caches.open(CACHE).then((c) => c.put(SHELL, fresh.clone()));
         return fresh;
-      } catch (err) {
-        return (await caches.match(SHELL)) || Response.error();
-      }
+      });
+      if (!cached) { try { return await network; } catch (err) { return Response.error(); } }
+      // Have a cached shell: race the network against a short timeout so a slow
+      // (not offline) connection can't hang launch; the network still refreshes the cache.
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 2500));
+      const winner = await Promise.race([network.catch(() => null), timeout]);
+      return winner || cached;
     })());
     return;
   }

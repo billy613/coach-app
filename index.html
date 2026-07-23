@@ -198,16 +198,15 @@
 
 <div class="inputbar" id="inputbar">
   <div class="irow">
-    <button id="micBtn" class="iconbtn" onclick="toggleMic()" title="Dictate">🎤</button>
+    <button id="voiceBtn" class="iconbtn" onclick="toggleVoice()" title="Voice mode (listen + speak)">🎙</button>
     <input id="msgInput" placeholder="Message the coach…" onkeydown="if(event.key==='Enter')send()">
-    <button id="speakBtn" class="iconbtn" onclick="toggleSpeak()" title="Speak replies">🔊</button>
     <button id="sendBtn" class="send" onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23b";
+const APP_BUILD = "2026-07-23c";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
   jess: ["How was my week?", "Build my upper-body plan", "What should I eat today?"],
@@ -218,13 +217,11 @@ let person = "jess";
 let tab = "coach";
 let pin = "";
 let busy = false;
-let speakOn = false;
 let chats = { jess: [], billy: [] };      // rendered chat cache per person
 let histLoaded = { jess: false, billy: false };
-const plansCache = { jess: {}, billy: {} };
+let voiceMode = false, recog = null, listening = false, speaking = false;
 
 try { pin = localStorage.getItem("coach_pin") || ""; } catch (e) {}
-try { speakOn = localStorage.getItem("coach_speak") === "1"; } catch (e) {}
 if (pin) document.getElementById("pinScreen").classList.add("hidden");
 
 const $ = (id) => document.getElementById(id);
@@ -283,7 +280,6 @@ function setPerson(p){
   document.documentElement.style.setProperty("--accent-soft", soft);
   $("btn-jess").classList.toggle("on", p === "jess");
   $("btn-billy").classList.toggle("on", p === "billy");
-  plansCache.jess = plansCache.jess; // no-op, keep caches per person
   loadTab();
 }
 
@@ -304,16 +300,17 @@ function loadTab(){
   else if (tab === "meal") loadPlan("meal");
   else if (tab === "fitness") loadPlan("fitness");
   else if (tab === "body") loadBody();
-  syncSpeakBtn();
 }
 
 // ---------- COACH ----------
 async function loadCoach(){
+  const who = person;                       // partition guard: never apply results to a different person
   $("dataErr").classList.add("hidden");
   renderChat();
   loadBriefing();
   try {
-    const d = await api("stats");
+    const d = await api("stats", { person: who });
+    if (person !== who) return;
     const a = d.avg7 || {};
     const cells = [];
     if (d.weight_kg != null) cells.push(["weight", fmt(d.weight_kg,1), "kg"]);
@@ -326,30 +323,32 @@ async function loadCoach(){
     $("stats").innerHTML = cells.map(([l,v,u]) => `<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
     $("fresh").textContent = (d.latest_date ? `latest data: ${d.latest_date}` : "no tracked data yet") + ` · v${APP_BUILD}`;
   } catch(e){
-    if (e.message === "pin") return;
+    if (e.message === "pin" || person !== who) return;
     $("dataErr").textContent = "Couldn't load data (" + e.message + "). Chat still works.";
     $("dataErr").classList.remove("hidden");
   }
-  if (!histLoaded[person]) loadHistory();
+  if (!histLoaded[who]) loadHistory();
 }
 
 async function loadBriefing(){
+  const who = person;
   const el = $("briefing");
   el.className = "brief loading"; el.textContent = "reading your week…";
   try {
-    const d = await api("briefing");
-    if (d.text){ el.className = "brief"; el.innerHTML = `<span class="lbl">Today's read · ${person==="jess"?"Jess":"Billy"}</span>` + esc(d.text); }
+    const d = await api("briefing", { person: who });
+    if (person !== who) return;
+    if (d.text){ el.className = "brief"; el.innerHTML = `<span class="lbl">Today's read · ${who==="jess"?"Jess":"Billy"}</span>` + esc(d.text); }
     else el.className = "brief hidden";
-  } catch(e){ el.className = "brief hidden"; }
+  } catch(e){ if (person === who) el.className = "brief hidden"; }
 }
 
 async function loadHistory(){
+  const who = person;
   try {
-    const d = await api("history");
-    chats[person] = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
-    histLoaded[person] = true;
-    $("histBtn").classList.add("hidden");
-    renderChat();
+    const d = await api("history", { person: who });
+    chats[who] = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
+    histLoaded[who] = true;
+    if (person === who){ $("histBtn").classList.add("hidden"); renderChat(); }
   } catch(e){}
 }
 
@@ -376,29 +375,35 @@ async function send(){
   inp.value = ""; busy = true;
   $("sendBtn").disabled = true;
   if (person === who) renderChat();
+  let replyText = null;
   try {
     const d = await api("chat", { person: who, message: text });
+    replyText = d.reply;
     chats[who].push({ role: "assistant", content: d.reply });
-    if (speakOn && person === who) speak(d.reply);
   } catch(e){
     if (e.message !== "pin") chats[who].push({ role: "assistant", content: "Problem: " + e.message });
   } finally {
     busy = false;
     $("sendBtn").disabled = false;
     if (person === who) renderChat();
+    if (voiceMode){
+      if (person === who && replyText) speak(replyText, () => { if (voiceMode) startListening(); });
+      else startListening();
+    }
   }
 }
 
 // ---------- PLANS ----------
 async function loadPlan(kind){
+  const who = person;
   const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
   bodyEl.innerHTML = `<div class="empty">loading…</div>`;
   try {
-    const d = plansCache[person][kind] || await api("plans");
-    plansCache[person] = d;
+    const d = await api("plans", { person: who });
+    if (person !== who) return;
     const plan = kind === "meal" ? d.meal_plan : d.fitness_plan;
     renderPlan(kind, plan);
-  } catch(e){ if(e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
+  } catch(e){ if(person===who && e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
 }
 
 function renderPlan(kind, plan){
@@ -411,23 +416,24 @@ function renderPlan(kind, plan){
 }
 
 async function makePlan(kind){
+  const who = person;
   const btn = kind === "meal" ? $("mealGen") : $("fitGen");
   const bodyEl = kind === "meal" ? $("mealBody") : $("fitBody");
   btn.disabled = true; const old = btn.textContent; btn.textContent = "thinking…";
   bodyEl.innerHTML = `<div class="empty">coach is writing your ${kind} plan…</div>`;
   try {
-    const d = await api("make_plan", { kind });
-    const plan = { updated: d.updated, content: d.content };
-    plansCache[person][kind === "meal" ? "meal_plan" : "fitness_plan"] = plan;
-    renderPlan(kind, plan);
-  } catch(e){ if(e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't generate (${esc(e.message)}).</div>`; }
+    const d = await api("make_plan", { person: who, kind });
+    if (person === who) renderPlan(kind, { updated: d.updated, content: d.content });
+  } catch(e){ if(person===who && e.message!=="pin") bodyEl.innerHTML = `<div class="empty">Couldn't generate (${esc(e.message)}).</div>`; }
   finally { btn.disabled = false; btn.textContent = old; }
 }
 
 // ---------- BODY ----------
 async function loadBody(){
+  const who = person;
   try {
-    const d = await api("body");
+    const d = await api("body", { person: who });
+    if (person !== who) return;
     const rows = d.entries || [];
     const last = rows[0];
     const daysSince = last ? Math.round((Date.now() - new Date(last.date+"T00:00:00").getTime())/86400000) : null;
@@ -440,59 +446,89 @@ async function loadBody(){
     $("bodyHist").innerHTML = rows.length ? `<table class="hist"><tr><th>date</th><th>wt</th><th>waist</th><th>hips</th><th>chest</th><th>arm</th><th>thigh</th></tr>` +
       rows.slice(0,20).map(r=>{ const m=r.measurements||{}; return `<tr><td>${esc(r.date)}</td><td>${r.weight_kg??"—"}</td><td>${m.waist_cm??"—"}</td><td>${m.hips_cm??"—"}</td><td>${m.chest_cm??"—"}</td><td>${m.arm_cm??"—"}</td><td>${m.thigh_cm??"—"}</td></tr>`; }).join("") + `</table>`
       : `<div class="empty">No entries yet.</div>`;
-  } catch(e){ if(e.message!=="pin") $("bodyHist").innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
+  } catch(e){ if(person===who && e.message!=="pin") $("bodyHist").innerHTML = `<div class="empty">Couldn't load (${esc(e.message)}).</div>`; }
 }
 
 async function saveRecord(){
+  const who = person;
   const g = (id) => { const v = $(id).value.trim(); return v === "" ? undefined : Number(v); };
   const measurements = {};
   const map = { m_waist:"waist_cm", m_hips:"hips_cm", m_chest:"chest_cm", m_shoulder:"shoulder_cm", m_arm:"arm_cm", m_thigh:"thigh_cm" };
   for (const [id,k] of Object.entries(map)){ const v = g(id); if (v != null && !isNaN(v)) measurements[k] = v; }
-  const payload = { weight_kg: g("m_weight"), body_fat_pct: g("m_bf"), measurements };
+  const payload = { person: who, weight_kg: g("m_weight"), body_fat_pct: g("m_bf"), measurements };
   $("recSave").disabled = true; $("recMsg").textContent = "saving…";
   try {
     await api("record", payload);
+    if (person !== who) return;
     $("recMsg").textContent = "saved ✓";
     for (const id of ["m_weight","m_bf","m_waist","m_hips","m_chest","m_shoulder","m_arm","m_thigh"]) $(id).value = "";
     loadBody();
-    setTimeout(()=>{ $("recMsg").textContent=""; }, 2500);
-  } catch(e){ if(e.message!=="pin") $("recMsg").textContent = "error: " + e.message; }
+    setTimeout(()=>{ if($("recMsg")) $("recMsg").textContent=""; }, 2500);
+  } catch(e){ if(person===who && e.message!=="pin") $("recMsg").textContent = "error: " + e.message; }
   finally { $("recSave").disabled = false; }
 }
 
-// ---------- VOICE ----------
-function syncSpeakBtn(){ $("speakBtn").classList.toggle("on", speakOn); }
-function toggleSpeak(){
-  speakOn = !speakOn;
-  try { localStorage.setItem("coach_speak", speakOn ? "1" : "0"); } catch(e){}
-  syncSpeakBtn();
-  if (!speakOn && window.speechSynthesis) speechSynthesis.cancel();
+// ---------- VOICE MODE (one button: listen + speak, hands-free) ----------
+function updateVoiceBtn(){
+  const b = $("voiceBtn");
+  b.classList.toggle("on", voiceMode);
+  b.classList.toggle("rec", listening);
+  b.textContent = speaking ? "🔊" : "🎙";
 }
-function speak(t){
+function primeSpeech(){                       // unlock iOS TTS inside the user tap
   if (!("speechSynthesis" in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(t).slice(0,700)); u.rate = 1.0; speechSynthesis.speak(u); } catch(e){}
+  try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch(e){}
 }
-let recog = null, recording = false;
-function toggleMic(){
+function toggleVoice(){
+  voiceMode = !voiceMode;
+  if (voiceMode){ primeSpeech(); startListening(); }
+  else { stopListening(); if (window.speechSynthesis) speechSynthesis.cancel(); speaking = false; }
+  updateVoiceBtn();
+}
+function startListening(){
+  if (!voiceMode || listening || busy || speaking) return;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR){ $("msgInput").placeholder = "Tap the mic on your keyboard to dictate"; $("msgInput").focus(); return; }
-  if (recording){ try{ recog.stop(); }catch(e){} return; }
+  if (!SR){ $("msgInput").placeholder = "Voice input isn't supported here — tap the mic on your keyboard"; return; }
   recog = new SR(); recog.lang = "en-US"; recog.interimResults = false; recog.maxAlternatives = 1;
-  recording = true; $("micBtn").classList.add("rec");
-  recog.onresult = (e) => { const t = e.results[0][0].transcript; $("msgInput").value = t; };
+  recog.onresult = (e) => { const t = (e.results[0][0].transcript || "").trim(); if (t){ $("msgInput").value = t; send(); } };
   recog.onerror = () => {};
-  recog.onend = () => { recording = false; $("micBtn").classList.remove("rec"); if ($("msgInput").value.trim()) send(); };
-  try { recog.start(); } catch(e){ recording = false; $("micBtn").classList.remove("rec"); }
+  recog.onend = () => { listening = false; updateVoiceBtn(); if (voiceMode && !busy && !speaking) setTimeout(startListening, 300); };
+  try { recog.start(); listening = true; updateVoiceBtn(); } catch(e){ listening = false; }
+}
+function stopListening(){
+  listening = false;
+  if (recog){ try { recog.onend = null; recog.stop(); } catch(e){} recog = null; }
+  updateVoiceBtn();
+}
+function speak(t, onDone){
+  if (!("speechSynthesis" in window) || !t){ if (onDone) onDone(); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(t).slice(0, 900)); u.rate = 1.0;
+    speaking = true; updateVoiceBtn();
+    u.onend = () => { speaking = false; updateVoiceBtn(); if (onDone) onDone(); };
+    u.onerror = () => { speaking = false; updateVoiceBtn(); if (onDone) onDone(); };
+    speechSynthesis.speak(u);
+  } catch(e){ speaking = false; if (onDone) onDone(); }
 }
 
 // ---------- boot ----------
-syncSpeakBtn();
+updateVoiceBtn();
 if (pin) loadTab();
 
+// keep the input bar above the iOS soft keyboard
+if (window.visualViewport){
+  const vv = window.visualViewport;
+  const fit = () => { document.body.style.height = vv.height + "px"; };
+  vv.addEventListener("resize", fit);
+  vv.addEventListener("scroll", fit);
+  fit();
+}
+
 if ("serviceWorker" in navigator){
+  const hadController = !!navigator.serviceWorker.controller;   // only reload on a real update, not first install
   navigator.serviceWorker.register("sw.js").catch(()=>{});
-  let reloaded = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloaded) return; reloaded = true; location.reload(); });
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) location.reload(); });
 }
 console.log("cadence build", APP_BUILD);
 </script>
