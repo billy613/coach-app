@@ -229,7 +229,7 @@
 
 <script>
 const CHAT_URL = "https://hynmejsyharalkmvtghk.supabase.co/functions/v1/coach-chat";
-const APP_BUILD = "2026-07-23d";
+const APP_BUILD = "2026-07-23e";
 const ACCENTS = { jess: ["#0B7285", "#E6F3F5"], billy: ["#D9480F", "#FCEEE6"] };
 const STARTERS = {
   jess: ["How was my week?", "Tweak my meal plan", "What should I train today?"],
@@ -239,7 +239,7 @@ const STARTERS = {
 let person = "jess";
 let tab = "today";
 let pin = "";
-let busy = false;
+let busy = { jess:false, billy:false };
 let drawerShown = false;
 let voiceMode = false, recog = null, listening = false, speaking = false;
 // per-person active conversation + list
@@ -284,7 +284,7 @@ async function api(action, extra, isRetry){
     return data;
   } catch(e){
     // one retry on transient network failure (iOS "Load failed")
-    if (!isRetry && e.message !== "pin" && (e.name === "TypeError" || /load failed|network|fetch/i.test(e.message))){
+    if (!isRetry && e.message !== "pin" && action !== "chat" && action !== "make_plan" && (e.name === "TypeError" || /load failed|network|fetch/i.test(e.message))){
       await new Promise(res=>setTimeout(res,800));
       return api(action, extra, true);
     }
@@ -306,6 +306,7 @@ function setPerson(p){
   document.documentElement.style.setProperty("--accent-soft",soft);
   $("btn-jess").classList.toggle("on",p==="jess");
   $("btn-billy").classList.toggle("on",p==="billy");
+  $("sendBtn").disabled = busy[person];
   if (drawerShown){ renderThread(); if(!convosLoaded[person]) loadConvos(); }
   loadTab();
 }
@@ -328,6 +329,7 @@ function loadTab(){
 async function loadToday(){
   const who = person;
   $("dataErr").classList.add("hidden");
+  $("stats").innerHTML=""; $("fresh").textContent="";
   loadBriefing();
   try {
     const d = await api("stats", { person: who });
@@ -342,7 +344,7 @@ async function loadToday(){
     if (a.hrv_ms!=null) cells.push(["7d HRV",fmt(a.hrv_ms),"ms"]);
     $("stats").innerHTML = cells.map(([l,v,u])=>`<div class="stat"><div class="v">${v}<small> ${u}</small></div><div class="l">${l}</div></div>`).join("");
     $("fresh").textContent = (d.latest_date?`latest data: ${d.latest_date}`:"no tracked data yet") + ` · v${APP_BUILD}`;
-  } catch(e){ if(e.message==="pin"||person!==who) return; $("dataErr").textContent="Couldn't load data ("+e.message+"). Chat still works."; $("dataErr").classList.remove("hidden"); }
+  } catch(e){ if(e.message==="pin"||person!==who) return; $("stats").innerHTML=""; $("dataErr").textContent="Couldn't load data ("+e.message+"). Chat still works."; $("dataErr").classList.remove("hidden"); }
 }
 async function loadBriefing(){
   const who = person; const el = $("briefing");
@@ -386,6 +388,7 @@ async function makePlan(kind, mode){
 // ---------- BODY ----------
 async function loadBody(){
   const who = person;
+  $("bodyHist").innerHTML=`<div class="empty">loading…</div>`; $("bodyNudge").classList.add("hidden");
   try {
     const d = await api("body",{ person: who });
     if (person!==who) return;
@@ -419,7 +422,7 @@ async function saveRecord(){
 function openDrawer(){ drawerShown=true; $("drawer").classList.add("on"); renderThread(); if(!convosLoaded[person]) loadConvos(); }
 function closeDrawer(){ drawerShown=false; $("drawer").classList.remove("on"); $("msgInput").blur(); loadTab(); }
 function newChat(){ convo[person] = {id:null,title:"New chat",msgs:[]}; closeConvoList(); openDrawer(); renderThread(); $("msgInput").focus(); }
-function openConvoList(){ $("convoList").classList.add("on"); loadConvos(); }
+function openConvoList(){ if(convosLoaded[person]) renderConvoList(); else $("clist").innerHTML=`<div class="empty" style="padding:20px 16px">loading…</div>`; $("convoList").classList.add("on"); loadConvos(); }
 function closeConvoList(){ $("convoList").classList.remove("on"); }
 
 async function loadConvos(){
@@ -428,7 +431,7 @@ async function loadConvos(){
     const d = await api("list_convos",{ person: who });
     if (person!==who) return;
     convos[who] = d.conversations || []; convosLoaded[who]=true; renderConvoList();
-  } catch(e){}
+  } catch(e){ if(person===who && !convosLoaded[who]) $("clist").innerHTML=`<div class="empty" style="padding:20px 16px">Couldn't load conversations.</div>`; }
 }
 function renderConvoList(){
   const el = $("clist"); const list = convos[person];
@@ -452,34 +455,34 @@ function renderThread(){
     el.innerHTML = `<div class="hint">Ask about your week, your plans, or anything on any screen.</div><div class="starters">${STARTERS[person].map(s=>`<button onclick="quickAsk('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join("")}</div>`;
     return;
   }
-  el.innerHTML = c.msgs.map(m=>`<div class="msg ${m.role==="user"?"user":""}">${esc(m.content)}</div>`).join("") + (busy?`<div class="thinking">coach is thinking…</div>`:"");
+  el.innerHTML = c.msgs.map(m=>`<div class="msg ${m.role==="user"?"user":""}">${esc(m.content)}</div>`).join("") + (busy[person]?`<div class="thinking">coach is thinking…</div>`:"");
   el.scrollTop = el.scrollHeight;
 }
 function quickAsk(s){ $("msgInput").value=s; send(); }
 
 async function send(){
   const inp = $("msgInput"); const text = inp.value.trim();
-  if (!text || busy) return;
-  const who = person;
+  if (!text || busy[person]) return;
+  const who = person; const c = convo[who];   // capture target person + conversation object
   if (!drawerShown) openDrawer();
-  convo[who].msgs.push({ role:"user", content:text });
-  inp.value=""; busy=true; $("sendBtn").disabled=true;
-  if (person===who) renderThread();
+  c.msgs.push({ role:"user", content:text });
+  inp.value=""; busy[who]=true; if(person===who) $("sendBtn").disabled=true;
+  if (person===who && convo[person]===c) renderThread();
   let replyText = null;
   try {
-    const d = await api("chat",{ person: who, conversation_id: convo[who].id, message:text });
-    convo[who].id = d.conversation_id ?? convo[who].id;
-    if (d.title && convo[who].title==="New chat") convo[who].title = d.title;
+    const d = await api("chat",{ person: who, conversation_id: c.id, message:text });
+    c.id = d.conversation_id ?? c.id;
+    if (d.title && c.title==="New chat") c.title = d.title;
     replyText = d.reply;
-    convo[who].msgs.push({ role:"assistant", content:d.reply });
+    c.msgs.push({ role:"assistant", content:d.reply });
     convosLoaded[who] = false;   // list changed; refresh next open
-  } catch(e){ if(e.message!=="pin") convo[who].msgs.push({ role:"assistant", content:"Problem: "+e.message }); }
+  } catch(e){ if(e.message!=="pin") c.msgs.push({ role:"assistant", content:"Problem: "+e.message }); }
   finally {
-    busy=false; $("sendBtn").disabled=false;
-    if (person===who) renderThread();
+    busy[who]=false; if(person===who) $("sendBtn").disabled = busy[person];
+    if (person===who && convo[person]===c) renderThread();
     // a plan may have been tweaked; refresh the relevant tab underneath
     if (person===who && (tab==="meal"||tab==="fitness")) loadPlans(tab);
-    if (voiceMode){ if(person===who && replyText) speak(replyText, ()=>{ if(voiceMode) startListening(); }); else startListening(); }
+    if (voiceMode){ if(person===who && convo[person]===c && replyText) speak(replyText, ()=>{ if(voiceMode) startListening(); }); else startListening(); }
   }
 }
 
@@ -502,13 +505,13 @@ function toggleVoice(){
   updateVoiceBtn();
 }
 function startListening(){
-  if(!voiceMode||listening||busy||speaking) return;
+  if(!voiceMode||listening||busy[person]||speaking) return;
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ $("msgInput").placeholder="Voice input isn't supported here — tap the mic on your keyboard"; return; }
   recog = new SR(); recog.lang="en-US"; recog.interimResults=false; recog.maxAlternatives=1;
   recog.onresult=(e)=>{ const t=(e.results[0][0].transcript||"").trim(); if(t){ $("msgInput").value=t; send(); } };
   recog.onerror=()=>{};
-  recog.onend=()=>{ listening=false; updateVoiceBtn(); if(voiceMode && !busy && !speaking) setTimeout(startListening,300); };
+  recog.onend=()=>{ listening=false; updateVoiceBtn(); if(voiceMode && !busy[person] && !speaking) setTimeout(startListening,300); };
   try { recog.start(); listening=true; updateVoiceBtn(); } catch(e){ listening=false; }
 }
 function stopListening(){ listening=false; if(recog){ try{ recog.onend=null; recog.stop(); }catch(e){} recog=null; } updateVoiceBtn(); }
@@ -531,6 +534,11 @@ function speak(t,onDone){
 updateVoiceBtn();
 if ("speechSynthesis" in window){ warmVoices(); try { speechSynthesis.onvoiceschanged = warmVoices; } catch(e){} }
 if (pin) loadTab();
+// hide the chat bar while editing Body form fields so it doesn't cover them
+document.querySelectorAll(".fld input").forEach(inp=>{
+  inp.addEventListener("focus",()=>{ $("inputbar").style.display="none"; });
+  inp.addEventListener("blur",()=>{ $("inputbar").style.display=""; });
+});
 if (window.visualViewport){
   const vv = window.visualViewport;
   const fit = () => { const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop); document.documentElement.style.setProperty("--kb", kb+"px"); };
